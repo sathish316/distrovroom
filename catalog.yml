@@ -1,7 +1,7 @@
 categories:
   - name: cli-programming
     items:
-      - name: GitHub CLI
+      - name: github-cli
         aliases:
           - gh
           - github cli
@@ -16,6 +16,8 @@ categories:
               - sudo apt install --only-upgrade gh
             config:
               - gh auth login
+            test:
+              - gh --version
           arch:
             install:
               - sudo pacman -S --needed github-cli
@@ -23,3 +25,5 @@ categories:
               - sudo pacman -Syu github-cli
             config:
               - gh auth login
+            test:
+              - gh --version
