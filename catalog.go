@@ -34,6 +34,7 @@ type environmentCommands struct {
 	Install []string `yaml:"install"`
 	Upgrade []string `yaml:"upgrade"`
 	Config  []string `yaml:"config"`
+	Test    []string `yaml:"test"`
 }
 
 func loadCatalog() (catalogFile, error) {

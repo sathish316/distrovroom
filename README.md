@@ -12,13 +12,7 @@ To use distro-vroom, copy the config file setupconfig.sample.yml to ~/.config/di
 
 ## Setup
 
-- ssh keys for github
-- 
-
-Run `./distro-vroom setup github-ssh-keys --email you@example.com` to generate
-an Ed25519 key, add it to `ssh-agent`, and display the public key to add to your
-GitHub account. The command reuses an existing key pair and does not overwrite
-private keys.
+- GitHub SSH keys ([setup guide](docs/setup.md))
 
 ## Editors
 

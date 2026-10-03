@@ -1,0 +1,5 @@
+environment: arch # Use arch or debian.
+commands:
+  - category: setup
+    item: github-ssh-keys
+    action: config
