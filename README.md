@@ -8,14 +8,14 @@ It's originally built for linux distros, but also happens to work for mac and wi
 
 # Config manual
 
-Create the sample config with `distro-vroom config init-from-sample`, or create a minimal `setupconfig.empty.yml` in the current directory with `distro-vroom config init-empty`.
+Create a config with `distro-vroom config init-from-sample`, or use `config init-empty` for SSH keys, GitHub CLI, and Codex. Set `environment` to `arch` or `debian` in the config.
 
-Use `config list`, `config add <category> <item>`, and `config remove <category> <item>` to manage selections. Use `catalog commands` to see commands for selected items and `status` to check local installation state.
+Use `config list`, `config add <category> <item>`, and `config remove <category> <item>` to manage selections. Run `catalog commands` to see commands, `status` to check installations, or `apply <category> [item]` to install selected items.
+
 
 ## Setup
 
-- ssh keys for github
-- 
+- GitHub SSH keys
 
 ## Editors
 

@@ -17,7 +17,8 @@ var sampleConfig []byte
 const defaultConfigPath = "~/.config/distrovroom/setupconfig.yml"
 
 type setupConfig struct {
-	Categories []configCategory `yaml:"categories"`
+	Environment string           `yaml:"environment"`
+	Categories  []configCategory `yaml:"categories"`
 }
 
 type configCategory struct {
@@ -52,6 +53,7 @@ func decodeConfig(raw []byte) (setupConfig, error) {
 	if err := decoder.Decode(&config); err != nil {
 		return setupConfig{}, fmt.Errorf("parse setup config: %w", err)
 	}
+	config.Environment = strings.ToLower(strings.TrimSpace(config.Environment))
 	return config, nil
 }
 

@@ -13,7 +13,7 @@ func newConfigCommand() *cobra.Command {
 		&cobra.Command{
 			Use: "init-empty", Short: "Create a minimal setupconfig.empty.yml in the current directory", Args: cobra.NoArgs,
 			RunE: func(cmd *cobra.Command, _ []string) error {
-				basic := setupConfig{Categories: []configCategory{
+				basic := setupConfig{Environment: "arch", Categories: []configCategory{
 					{Name: "setup", Items: []string{"ssh-keys"}},
 					{Name: "cli-programming", Items: []string{"github-cli"}},
 					{Name: "agents", Items: []string{"codex"}},
