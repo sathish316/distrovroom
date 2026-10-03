@@ -65,7 +65,7 @@ func loadSetupConfig(requestedPath string) (setupConfig, error) {
 
 func configuredItems(config setupConfig, categoryName string) ([]string, bool) {
 	for name, items := range config.Categories {
-		if strings.EqualFold(strings.TrimSpace(name), strings.TrimSpace(categoryName)) {
+		if canonicalizeName(name) == canonicalizeName(categoryName) {
 			return items, true
 		}
 	}

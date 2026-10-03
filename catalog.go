@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	_ "embed"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -38,23 +37,13 @@ type environmentCommands struct {
 }
 
 func loadCatalog() (catalogFile, error) {
-	var raw []byte
+	raw := embeddedCatalog
 	if catalogPath != "" {
 		contents, err := os.ReadFile(catalogPath)
 		if err != nil {
 			return catalogFile{}, fmt.Errorf("read catalog %q: %w", catalogPath, err)
 		}
 		raw = contents
-	} else {
-		contents, err := os.ReadFile("catalog.yml")
-		switch {
-		case err == nil:
-			raw = contents
-		case errors.Is(err, os.ErrNotExist):
-			raw = embeddedCatalog
-		default:
-			return catalogFile{}, fmt.Errorf("read catalog.yml: %w", err)
-		}
 	}
 
 	var catalog catalogFile
@@ -78,7 +67,7 @@ func loadCatalog() (catalogFile, error) {
 
 func findCategory(catalog catalogFile, name string) (catalogCategory, bool) {
 	for _, category := range catalog.Categories {
-		if strings.EqualFold(strings.TrimSpace(category.Name), strings.TrimSpace(name)) {
+		if canonicalizeName(category.Name) == canonicalizeName(name) {
 			return category, true
 		}
 	}
@@ -86,13 +75,15 @@ func findCategory(catalog catalogFile, name string) (catalogCategory, bool) {
 }
 
 func findItem(category catalogCategory, name string) (catalogItem, bool) {
-	query := normalizedText(name)
+	query := canonicalizeName(name)
 	for _, item := range category.Items {
-		if normalizedText(item.Name) == query {
+		if canonicalizeName(item.Name) == query {
 			return item, true
 		}
+	}
+	for _, item := range category.Items {
 		for _, alias := range item.Aliases {
-			if normalizedText(alias) == query {
+			if canonicalizeName(alias) == query {
 				return item, true
 			}
 		}
@@ -100,6 +91,7 @@ func findItem(category catalogCategory, name string) (catalogItem, bool) {
 	return catalogItem{}, false
 }
 
-func normalizedText(value string) string {
-	return strings.Join(strings.Fields(strings.ToLower(strings.TrimSpace(value))), " ")
+// canonicalizeName lowercases names and turns whitespace runs into CLI-friendly hyphens.
+func canonicalizeName(value string) string {
+	return strings.Join(strings.Fields(strings.ToLower(strings.TrimSpace(value))), "-")
 }

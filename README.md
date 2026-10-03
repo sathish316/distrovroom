@@ -71,30 +71,4 @@ Copy `setupconfig.sample.yml` to `~/.config/distrovroom/setupconfig.yml` and sel
 
 # Getting started
 
-Prerequisites:
-* curl
-* golang
-
-Install distro-vroom from source:
-TBD
-
-Install distro-vroom from releases:
-TBD
-
-Initialize your setup config:
-TBD
-
-Explore and add items from the catalog to your personal config:
-TBD
-
-Install app/cli/util/env to your distro:
-TBD
-
-Install all items in a category to your distro:
-TBD
-
-Show the status of all items (installed/missing) in a category in your distro:
-TBD
-
-Show the status of all categories (installed/missing) and all items in your distro:
-TBD
+See the [getting started guide](docs/getting-started.md) for build, catalog, and custom-catalog instructions.
