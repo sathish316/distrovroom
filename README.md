@@ -8,9 +8,9 @@ It's originally built for linux distros, but also happens to work for mac and wi
 
 # Config manual
 
-Create the sample config with `distro-vroom config init-from-sample`, or create a minimal `setupconfig.empty.yml` in the current directory with `distro-vroom config init-empty`. The sample selects SSH keys, GitHub CLI, and all seven CLI agents. Config files contain only selected category and item names; install commands stay in the catalog.
+Create the sample config with `distro-vroom config init-from-sample`, or create a minimal `setupconfig.empty.yml` in the current directory with `distro-vroom config init-empty`.
 
-Use `config list`, `config add <category> <item>`, and `config remove <category> <item>` to manage selections. Use `catalog commands` to see the catalog commands for those selections and `status` to check local installation state. See the [getting started guide](docs/getting-started.md) for examples.
+Use `config list`, `config add <category> <item>`, and `config remove <category> <item>` to manage selections. Use `catalog commands` to see commands for selected items and `status` to check local installation state.
 
 ## Setup
 
@@ -71,7 +71,3 @@ Use `config list`, `config add <category> <item>`, and `config remove <category>
 ## Other config
 
 - gitconfig
-
-# Getting started
-
-See the [getting started guide](docs/getting-started.md) for build, catalog, and custom-catalog instructions.

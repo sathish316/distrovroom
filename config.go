@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
 //go:embed setupconfig.sample.yml
 var sampleConfig []byte
+
+const defaultConfigPath = "~/.config/distrovroom/setupconfig.yml"
 
 type setupConfig struct {
 	Categories []configCategory `yaml:"categories"`
@@ -28,14 +31,18 @@ type selectedItem struct {
 }
 
 func activeConfigPath() (string, error) {
-	if configPath != "" {
-		return configPath, nil
+	path := configPath
+	if path == "" {
+		path = defaultConfigPath
 	}
-	dir, err := os.UserConfigDir()
-	if err != nil {
-		return "", fmt.Errorf("find user config directory: %w", err)
+	if strings.HasPrefix(path, "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("find home directory: %w", err)
+		}
+		return filepath.Join(home, path[2:]), nil
 	}
-	return filepath.Join(dir, "distrovroom", "setupconfig.yml"), nil
+	return path, nil
 }
 
 func decodeConfig(raw []byte) (setupConfig, error) {

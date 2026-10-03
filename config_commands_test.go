@@ -19,6 +19,22 @@ func runCLI(t *testing.T, args ...string) (string, error) {
 	return out.String(), err
 }
 
+func TestDefaultConfigFileFlagUsesHomeConfigPath(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	root := newRootCommand()
+	if got := root.PersistentFlags().Lookup("config-file").DefValue; got != defaultConfigPath {
+		t.Fatalf("config-file default = %q, want %q", got, defaultConfigPath)
+	}
+	path, err := activeConfigPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := filepath.Join(home, ".config", "distrovroom", "setupconfig.yml"); path != want {
+		t.Fatalf("active config path = %q, want %q", path, want)
+	}
+}
+
 func TestSampleConfigAndSelectedCatalogCommands(t *testing.T) {
 	catalog, err := loadCatalog()
 	if err != nil {
