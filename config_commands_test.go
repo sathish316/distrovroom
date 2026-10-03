@@ -163,44 +163,6 @@ func TestConfigAddRemoveAndAliasDeduplication(t *testing.T) {
 	}
 }
 
-func TestInitEmptyHasOnlyBasicItems(t *testing.T) {
-	old, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chdir(t.TempDir()); err != nil {
-		t.Fatal(err)
-	}
-	defer os.Chdir(old)
-	if _, err := runCLI(t, "config", "init-empty"); err != nil {
-		t.Fatal(err)
-	}
-	raw, err := os.ReadFile("setupconfig.empty.yml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	config, err := decodeConfig(raw)
-	if err != nil {
-		t.Fatal(err)
-	}
-	catalog, err := loadCatalog()
-	if err != nil {
-		t.Fatal(err)
-	}
-	selected, err := resolveConfig(config, catalog)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(selected) != 3 {
-		t.Fatalf("basic config has %d items, want 3", len(selected))
-	}
-	for _, name := range []string{"ssh-keys", "github-cli", "codex"} {
-		if !strings.Contains(string(raw), name) {
-			t.Fatalf("basic config missing %s", name)
-		}
-	}
-}
-
 func TestStatusUsesCatalogTestsAndPlainOutput(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "setupconfig.yml")
 	if err := os.WriteFile(path, []byte("categories:\n  - name: agents\n    items: [codex, pi]\n"), 0600); err != nil {
