@@ -1,0 +1,33 @@
+-[X] cli bootstrap
+-[ ] repo setup
+  -[ ] dotfiles repo
+  -[ ] gitconfig from dotfiles repo by symlinking
+  -[ ] neovim dotfiles repo
+  -[ ] symlink command for neovim config
+  -[ ] emacs dotfiles repo
+  -[ ] symlink command for emacs config
+-[ ] programming tools and clis
+  -[X] gh cli
+  -[ ] zed editor
+  -[ ] neovim
+  -[ ] emacs
+-[ ] programming languages and tools
+  -[ ] sdk man java, maven, gradle, scala, clojure, kotlin
+  -[ ] uv, python
+  -[ ] golang, gofmt
+  -[ ] rust, cargo
+-[ ] setup commands
+  -[X] ssh keys setup in github
+-[ ] productivity apps and clis
+  -[ ] todoist
+-[ ] agents
+  -[ ] codex
+  -[ ] claude code
+  -[ ] cursor ide
+  -[ ] cursor-agent cli
+  -[ ] Pi
+  -[ ] Opencode
+  -[ ] Cursor agent
+-[ ] cli views
+  -[ ] init config in right location
+  -[ ] view status of config - available, installed etc by category and items
