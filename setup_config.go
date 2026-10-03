@@ -10,24 +10,20 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const defaultSetupConfigRelativePath = ".config/distrovroom/setupconfig.yml"
+
 type setupConfig struct {
 	Environment string              `yaml:"environment"`
-	Commands    []configuredCommand `yaml:"commands"`
-}
-
-type configuredCommand struct {
-	Category string `yaml:"category"`
-	Item     string `yaml:"item"`
-	Action   string `yaml:"action"`
+	Categories  map[string][]string `yaml:"categories"`
 }
 
 func loadSetupConfig(requestedPath string) (setupConfig, error) {
 	if requestedPath == "" {
-		configDir, err := os.UserConfigDir()
+		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			return setupConfig{}, fmt.Errorf("find config directory: %w", err)
+			return setupConfig{}, fmt.Errorf("find home directory: %w", err)
 		}
-		requestedPath = filepath.Join(configDir, "distrovroom", "mysetupconfig.yml")
+		requestedPath = filepath.Join(homeDir, defaultSetupConfigRelativePath)
 	}
 
 	contents, err := os.ReadFile(requestedPath)
@@ -48,23 +44,30 @@ func loadSetupConfig(requestedPath string) (setupConfig, error) {
 	if config.Environment == "" {
 		return setupConfig{}, fmt.Errorf("setup config %q must set an environment", requestedPath)
 	}
-	if len(config.Commands) == 0 {
-		return setupConfig{}, fmt.Errorf("setup config %q must select at least one catalog command", requestedPath)
+	if len(config.Categories) == 0 {
+		return setupConfig{}, fmt.Errorf("setup config %q must select at least one category", requestedPath)
 	}
-
-	for index := range config.Commands {
-		selection := &config.Commands[index]
-		selection.Category = strings.TrimSpace(selection.Category)
-		selection.Item = strings.TrimSpace(selection.Item)
-		selection.Action = strings.ToLower(strings.TrimSpace(selection.Action))
-		if selection.Category == "" || selection.Item == "" {
-			return setupConfig{}, fmt.Errorf("setup config command %d must set both category and item", index+1)
+	for category, items := range config.Categories {
+		if strings.TrimSpace(category) == "" {
+			return setupConfig{}, fmt.Errorf("setup config %q has an empty category name", requestedPath)
 		}
-		switch selection.Action {
-		case "install", "upgrade", "config", "test":
-		default:
-			return setupConfig{}, fmt.Errorf("setup config command %d has unsupported action %q", index+1, selection.Action)
+		if len(items) == 0 {
+			return setupConfig{}, fmt.Errorf("setup config category %q must select at least one item", category)
+		}
+		for index, item := range items {
+			if strings.TrimSpace(item) == "" {
+				return setupConfig{}, fmt.Errorf("setup config category %q has an empty item at position %d", category, index+1)
+			}
 		}
 	}
 	return config, nil
+}
+
+func configuredItems(config setupConfig, categoryName string) ([]string, bool) {
+	for name, items := range config.Categories {
+		if strings.EqualFold(strings.TrimSpace(name), strings.TrimSpace(categoryName)) {
+			return items, true
+		}
+	}
+	return nil, false
 }

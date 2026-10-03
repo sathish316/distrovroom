@@ -8,11 +8,11 @@ It's originally built for linux distros, but also happens to work for mac and wi
 
 # Config manual
 
-To use distro-vroom, copy the config file setupconfig.sample.yml to ~/.config/distrovroom/mysetupconfig.yml, customize it and use distro-vroom cli to add apps, utils, programming environments from its catalog to your config. Once a specific tool is added to your config, you can apply your config to install or upgrade it.
+Copy `setupconfig.sample.yml` to `~/.config/distrovroom/setupconfig.yml` and select the catalog items you want for your environment. Run `distro-vroom apply <category> [item]` to install one item or every selected item in a category.
 
 ## Setup
 
-- GitHub SSH keys ([setup guide](docs/setup.md))
+- GitHub SSH keys
 
 ## Editors
 

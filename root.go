@@ -13,7 +13,7 @@ func newRootCommand() *cobra.Command {
 		SilenceUsage:  true,
 	}
 	root.PersistentFlags().StringVar(&catalogPath, "catalog", "", "path to a catalog YAML file")
-	root.PersistentFlags().StringVar(&configPath, "config", "", "path to your setup config")
-	root.AddCommand(newCatalogCommand(), newSetupCommand(), newApplyCommand())
+	root.PersistentFlags().StringVar(&configPath, "config", "", "path to setup config (default ~/"+defaultSetupConfigRelativePath+")")
+	root.AddCommand(newCatalogCommand(), newApplyCommand())
 	return root
 }

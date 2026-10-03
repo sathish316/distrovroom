@@ -5,77 +5,20 @@ categories:
         aliases:
           - GitHub SSH keys
           - ssh keys for github
-        description: Generate or reuse an Ed25519 key, add it to ssh-agent, and show the public key for your GitHub account.
+        description: Generate an Ed25519 SSH key pair for GitHub.
         environments:
           debian:
             install:
               - sudo apt update
               - sudo apt install openssh-client
-            upgrade:
-              - sudo apt update
-              - sudo apt install --only-upgrade openssh-client
-            config: &githubSSHKeyConfig
-              - |
-                set -eu
-
-                ssh_dir="${HOME}/.ssh"
-                key_path="${ssh_dir}/id_ed25519"
-                public_key_path="${key_path}.pub"
-                mkdir -p -m 700 "$ssh_dir"
-
-                if [ -L "$key_path" ] && [ ! -e "$key_path" ]; then
-                  printf 'Refusing to replace broken SSH key symlink: %s\n' "$key_path" >&2
-                  exit 1
-                fi
-                if [ ! -e "$key_path" ]; then
-                  email="$(git config --get user.email 2>/dev/null || true)"
-                  ssh-keygen -t ed25519 -C "$email" -f "$key_path"
-                fi
-
-                derived_public_key="$(ssh-keygen -y -f "$key_path")"
-                if [ ! -e "$public_key_path" ]; then
-                  printf '%s\n' "$derived_public_key" > "$public_key_path"
-                fi
-                derived_public_key="$(printf '%s\n' "$derived_public_key" | awk '{print $1 " " $2}')"
-                saved_public_key="$(awk 'NF >= 2 {print $1 " " $2; exit}' "$public_key_path")"
-                if [ -z "$saved_public_key" ] || [ "$derived_public_key" != "$saved_public_key" ]; then
-                  printf 'The public key %s does not match its private key. Repair the pair before continuing.\n' "$public_key_path" >&2
-                  exit 1
-                fi
-
-                agent_available=false
-                if [ -n "${SSH_AUTH_SOCK:-}" ]; then
-                  if agent_probe="$(ssh-add -l 2>&1)"; then
-                    agent_available=true
-                  else
-                    case "$agent_probe" in
-                      *"The agent has no identities"*) agent_available=true ;;
-                      *) : ;;
-                    esac
-                  fi
-                fi
-                agent_started=false
-                if [ "$agent_available" = false ]; then
-                  agent_env="$(ssh-agent -s)"
-                  eval "$agent_env"
-                  agent_started=true
-                fi
-
-                ssh-add "$key_path"
-                if [ "$agent_started" = true ]; then
-                  printf '\nSSH agent started. To reuse it in this shell, run:\nexport SSH_AUTH_SOCK=%s\nexport SSH_AGENT_PID=%s\n' "$SSH_AUTH_SOCK" "$SSH_AGENT_PID"
-                fi
-                printf '\nAdd this public key to your GitHub account at https://github.com/settings/ssh/new:\n'
-                cat "$public_key_path"
+              - &githubSSHKeygen 'install -d -m 700 "$HOME/.ssh" && ssh-keygen -t ed25519 -C {{.user_email}} -f "$HOME/.ssh/id_ed25519"'
           arch:
             install:
               - sudo pacman -S --needed openssh
-            upgrade:
-              - sudo pacman -Syu openssh
-            config: *githubSSHKeyConfig
+              - *githubSSHKeygen
   - name: cli-programming
     items:
-      - name: GitHub CLI
+      - name: github-cli
         aliases:
           - gh
           - github cli

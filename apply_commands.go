@@ -1,42 +1,32 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
+	"strings"
+	"text/template"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
-type plannedCommand struct {
-	category string
-	item     string
-	action   string
-	commands []string
-}
-
 func newApplyCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "apply",
-		Short: "Run the commands selected in your config",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			return runConfiguredCommands(cmd, "")
-		},
-	}
-}
-
-func newSetupCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "setup <item>",
-		Short: "Set up tools",
-		Args:  cobra.ExactArgs(1),
+	command := &cobra.Command{
+		Use:     "apply <category> [item]",
+		Short:   "Install one configured item or every item in a category",
+		Example: "  distro-vroom apply setup github-ssh-keys --user-email you@example.com\n  distro-vroom apply cli-programming",
+		Args:    cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runConfiguredCommands(cmd, args[0])
+			return applyConfiguredItems(cmd, args)
 		},
 	}
+	command.Flags().String("user-email", "", "email for catalog commands that request it")
+	return command
 }
 
-func runConfiguredCommands(cmd *cobra.Command, setupItem string) error {
+func applyConfiguredItems(cmd *cobra.Command, args []string) error {
 	catalog, err := loadCatalog()
 	if err != nil {
 		return err
@@ -45,90 +35,117 @@ func runConfiguredCommands(cmd *cobra.Command, setupItem string) error {
 	if err != nil {
 		return err
 	}
-	// Validate every selection before running any shell commands.
-	plan, err := planConfiguredCommands(catalog, config)
-	if err != nil {
-		return err
+	category, ok := findCategory(catalog, args[0])
+	if !ok {
+		return fmt.Errorf("category %q is not in the catalog", args[0])
+	}
+	selectedItems, ok := configuredItems(config, category.Name)
+	if !ok {
+		return fmt.Errorf("category %q is not selected in your setup config", category.Name)
 	}
 
-	if setupItem != "" {
-		category, ok := findCategory(catalog, "setup")
+	if len(args) == 2 {
+		item, ok := findItem(category, args[1])
 		if !ok {
-			return fmt.Errorf("setup category is not in the catalog")
+			return fmt.Errorf("item %q is not in catalog category %q", args[1], category.Name)
 		}
-		item, ok := findItem(category, setupItem)
-		if !ok {
-			return fmt.Errorf("setup item %q is not in the catalog", setupItem)
+		if !isConfiguredItem(category, selectedItems, item.Name) {
+			return fmt.Errorf("item %q is not selected in setup config category %q", item.Name, category.Name)
 		}
-		selected := make([]plannedCommand, 0, 1)
-		for _, step := range plan {
-			if step.category == category.Name && step.item == item.Name && step.action == "config" {
-				selected = append(selected, step)
-			}
-		}
-		if len(selected) == 0 {
-			return fmt.Errorf("setup item %q is not selected with action config in your setup config", item.Name)
-		}
-		plan = selected
+		return applyItem(cmd, config.Environment, category, item)
 	}
 
-	for _, step := range plan {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Running %s/%s %s commands for %s\n", step.category, step.item, step.action, config.Environment); err != nil {
+	for _, name := range selectedItems {
+		item, ok := findItem(category, name)
+		if !ok {
+			return fmt.Errorf("item %q is not in catalog category %q", name, category.Name)
+		}
+		if err := applyItem(cmd, config.Environment, category, item); err != nil {
 			return err
-		}
-		for _, command := range step.commands {
-			process := exec.Command("sh", "-c", command)
-			process.Stdin = cmd.InOrStdin()
-			process.Stdout = cmd.OutOrStdout()
-			process.Stderr = cmd.ErrOrStderr()
-			if err := process.Run(); err != nil {
-				return fmt.Errorf("run %s/%s %s commands for %s: %w", step.category, step.item, step.action, config.Environment, err)
-			}
 		}
 	}
 	return nil
 }
 
-func planConfiguredCommands(catalog catalogFile, config setupConfig) ([]plannedCommand, error) {
-	plan := make([]plannedCommand, 0, len(config.Commands))
-	for _, selection := range config.Commands {
-		category, ok := findCategory(catalog, selection.Category)
-		if !ok {
-			return nil, fmt.Errorf("category %q is not in the catalog", selection.Category)
+func isConfiguredItem(category catalogCategory, selectedItems []string, itemName string) bool {
+	for _, selectedName := range selectedItems {
+		selectedItem, ok := findItem(category, selectedName)
+		if ok && selectedItem.Name == itemName {
+			return true
 		}
-		item, ok := findItem(category, selection.Item)
-		if !ok {
-			return nil, fmt.Errorf("item %q is not in catalog category %q", selection.Item, category.Name)
-		}
-		environment, ok := item.Environments[config.Environment]
-		if !ok {
-			return nil, fmt.Errorf("item %q in category %q does not support environment %q", item.Name, category.Name, config.Environment)
-		}
-		commands := commandsForAction(environment, selection.Action)
-		if len(commands) == 0 {
-			return nil, fmt.Errorf("item %q in category %q has no %s commands for %s", item.Name, category.Name, selection.Action, config.Environment)
-		}
-		plan = append(plan, plannedCommand{
-			category: category.Name,
-			item:     item.Name,
-			action:   selection.Action,
-			commands: commands,
-		})
 	}
-	return plan, nil
+	return false
 }
 
-func commandsForAction(commands environmentCommands, action string) []string {
-	switch action {
-	case "install":
-		return commands.Install
-	case "upgrade":
-		return commands.Upgrade
-	case "config":
-		return commands.Config
-	case "test":
-		return commands.Test
-	default:
-		return nil
+func applyItem(cmd *cobra.Command, environmentName string, category catalogCategory, item catalogItem) error {
+	environment, ok := item.Environments[environmentName]
+	if !ok {
+		return fmt.Errorf("item %q in category %q does not support environment %q", item.Name, category.Name, environmentName)
 	}
+	if len(environment.Install) == 0 {
+		return fmt.Errorf("item %q in category %q has no install commands for %s", item.Name, category.Name, environmentName)
+	}
+	parameters := commandParameters(cmd)
+	renderedCommands := make([]string, 0, len(environment.Install))
+	for _, command := range environment.Install {
+		rendered, err := renderCatalogCommand(command, parameters)
+		if err != nil {
+			return fmt.Errorf("render install command for %s/%s: %w", category.Name, item.Name, err)
+		}
+		renderedCommands = append(renderedCommands, rendered)
+	}
+	for _, command := range renderedCommands {
+		if err := echoCommand(cmd, command); err != nil {
+			return err
+		}
+		process := exec.Command("sh", "-c", command)
+		process.Stdin = cmd.InOrStdin()
+		process.Stdout = cmd.OutOrStdout()
+		process.Stderr = cmd.ErrOrStderr()
+		if err := process.Run(); err != nil {
+			return fmt.Errorf("install %s/%s for %s: %w", category.Name, item.Name, environmentName, err)
+		}
+	}
+	return nil
+}
+
+func echoCommand(cmd *cobra.Command, command string) error {
+	out := cmd.OutOrStdout()
+	if file, ok := out.(*os.File); ok && os.Getenv("NO_COLOR") == "" && os.Getenv("TERM") != "" && os.Getenv("TERM") != "dumb" {
+		if info, err := file.Stat(); err == nil && info.Mode()&os.ModeCharDevice != 0 {
+			_, err = fmt.Fprintf(out, "\033[36m$ %s\033[0m\n", command)
+			return err
+		}
+	}
+	_, err := fmt.Fprintf(out, "$ %s\n", command)
+	return err
+}
+
+// Pass every supplied Cobra flag to catalog templates as a shell-safe value.
+func commandParameters(cmd *cobra.Command) map[string]string {
+	parameters := make(map[string]string)
+	collect := func(flag *pflag.Flag) {
+		if value := flag.Value.String(); value != "" {
+			parameters[strings.ReplaceAll(flag.Name, "-", "_")] = shellQuote(value)
+		}
+	}
+	cmd.Flags().Visit(collect)
+	cmd.InheritedFlags().Visit(collect)
+	return parameters
+}
+
+func renderCatalogCommand(command string, parameters map[string]string) (string, error) {
+	tmpl, err := template.New("catalog command").Option("missingkey=error").Parse(command)
+	if err != nil {
+		return "", err
+	}
+	var output bytes.Buffer
+	if err := tmpl.Execute(&output, parameters); err != nil {
+		return "", err
+	}
+	return output.String(), nil
+}
+
+func shellQuote(value string) string {
+	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
 }
