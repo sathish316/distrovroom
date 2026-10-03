@@ -1,0 +1,11 @@
+environment: arch # Change to debian for Debian or Ubuntu.
+categories:
+  - name: setup
+    items:
+      - github-ssh-keys
+  - name: cli-programming
+    items:
+      - github-cli
+  - name: agents
+    items:
+      - codex

@@ -15,7 +15,10 @@ import (
 //go:embed setupconfig.sample.yml
 var sampleConfig []byte
 
-const defaultConfigPath = "~/.config/distrovroom/setupconfig.yml"
+//go:embed setupconfig.empty.yml
+var emptyConfig []byte
+
+const defaultConfigPath = "~/.config/distrovroom/config.yml"
 
 type setupConfig struct {
 	Environment string           `yaml:"environment"`
@@ -84,7 +87,7 @@ func loadConfig() (setupConfig, error) {
 	}
 	raw, err := os.ReadFile(path)
 	if err != nil {
-		return setupConfig{}, fmt.Errorf("read setup config %q: %w (run `distro-vroom config init-from-sample` first)", path, err)
+		return setupConfig{}, fmt.Errorf("read setup config %q: %w (run `distro-vroom configure init-from-sample` first)", path, err)
 	}
 	return decodeConfig(raw)
 }
