@@ -1,4 +1,21 @@
 categories:
+  - name: setup
+    items:
+      - name: github-ssh-keys
+        aliases:
+          - GitHub SSH keys
+          - ssh keys for github
+        description: Generate an Ed25519 SSH key pair for GitHub.
+        environments:
+          debian:
+            install:
+              - sudo apt update
+              - sudo apt install openssh-client
+              - &githubSSHKeygen 'install -d -m 700 "$HOME/.ssh" && ssh-keygen -t ed25519 -C {{.user_email}} -f "$HOME/.ssh/id_ed25519"'
+          arch:
+            install:
+              - sudo pacman -S --needed openssh
+              - *githubSSHKeygen
   - name: cli-programming
     items:
       - name: github-cli

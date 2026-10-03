@@ -1,0 +1,6 @@
+environment: arch # Use arch or debian.
+categories:
+  setup:
+    - github-ssh-keys
+  cli-programming:
+    - github-cli

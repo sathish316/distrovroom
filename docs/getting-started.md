@@ -1,6 +1,6 @@
 # Getting started
 
-DistroVroom is a Go CLI for browsing and searching install guidance in a catalog. It currently lists catalog entries and the Linux environments supported by each item; it does not run package installation commands.
+DistroVroom browses a catalog and runs install commands for items selected in your setup config.
 
 ## Build
 
@@ -25,7 +25,7 @@ Run these commands from the repository directory:
 ./distro-vroom catalog search gh
 ```
 
-Category and item lookups ignore letter case. Item names use lowercase hyphens; aliases such as `gh` are also accepted by `show-item`. Item details show the environments supported by that catalog entry. The bundled catalog currently includes `arch` and `debian` entries for GitHub CLI.
+Category and item lookups ignore letter case. Item names use lowercase hyphens; aliases such as `gh` are also accepted by `show-item`. Item details show the environments supported by that catalog entry. The bundled catalog currently includes `arch` and `debian` entries for GitHub CLI and GitHub SSH keys.
 
 ## Use a custom catalog
 
@@ -51,4 +51,4 @@ categories:
             test: ["gh --version"]
 ```
 
-The `install`, `upgrade`, `config`, and `test` command lists are catalog data. Review a command before running it in your shell.
+The `install`, `upgrade`, `config`, and `test` command lists are catalog data. `apply` runs the install commands for the selected item or category.
