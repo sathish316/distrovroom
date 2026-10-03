@@ -10,6 +10,10 @@ import (
 
 func runCLI(t *testing.T, args ...string) (string, error) {
 	t.Helper()
+	previousCatalogPath, previousConfigPath := catalogPath, configPath
+	defer func() {
+		catalogPath, configPath = previousCatalogPath, previousConfigPath
+	}()
 	var out bytes.Buffer
 	cmd := newRootCommand()
 	cmd.SetOut(&out)
@@ -204,5 +208,29 @@ func TestApplyUsesSelectedItemsAndDefaultEnvironment(t *testing.T) {
 	}
 	if string(raw) != "you@example.com" {
 		t.Fatalf("applied output = %q", raw)
+	}
+}
+
+func TestLegacyCategoryMapConfigStillLoads(t *testing.T) {
+	previousCatalogPath := catalogPath
+	catalogPath = ""
+	defer func() { catalogPath = previousCatalogPath }()
+	config, err := decodeConfig([]byte("environment: arch\ncategories:\n  setup: [github-ssh-keys]\n  cli-programming: [github-cli]\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if config.Environment != "arch" || len(config.Categories) != 2 {
+		t.Fatalf("legacy config was not converted: %#v", config)
+	}
+	catalog, err := loadCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	selected, err := resolveConfig(config, catalog)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(selected) != 2 {
+		t.Fatalf("legacy config selected %d items, want 2", len(selected))
 	}
 }

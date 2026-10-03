@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -51,7 +52,26 @@ func decodeConfig(raw []byte) (setupConfig, error) {
 	decoder := yaml.NewDecoder(bytes.NewReader(raw))
 	decoder.KnownFields(true)
 	if err := decoder.Decode(&config); err != nil {
-		return setupConfig{}, fmt.Errorf("parse setup config: %w", err)
+		// Older setup configs used a category-to-items mapping. Read that form so
+		// existing apply configs remain usable after the CLI gains config editing.
+		var legacy struct {
+			Environment string              `yaml:"environment"`
+			Categories  map[string][]string `yaml:"categories"`
+		}
+		legacyDecoder := yaml.NewDecoder(bytes.NewReader(raw))
+		legacyDecoder.KnownFields(true)
+		if legacyErr := legacyDecoder.Decode(&legacy); legacyErr != nil {
+			return setupConfig{}, fmt.Errorf("parse setup config: %w", err)
+		}
+		config.Environment = legacy.Environment
+		categories := make([]string, 0, len(legacy.Categories))
+		for name := range legacy.Categories {
+			categories = append(categories, name)
+		}
+		sort.Strings(categories)
+		for _, name := range categories {
+			config.Categories = append(config.Categories, configCategory{Name: name, Items: legacy.Categories[name]})
+		}
 	}
 	config.Environment = strings.ToLower(strings.TrimSpace(config.Environment))
 	return config, nil
