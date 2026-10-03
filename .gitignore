@@ -1,2 +1,5 @@
 /distro-vroom
 /distro-vroom.exe
+.cache
+alias
+versions

@@ -44,6 +44,25 @@ categories:
               - gh auth login
             test:
               - command -v gh
+  - name: programming-env
+    items:
+      - name: javascript
+        description: Install Node.js 24 and npm with nvm.
+        environments:
+          default:
+            install:
+              - "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.8/install.sh | bash"
+              - >-
+                touch "$HOME/.bashrc";
+                if ! grep -Fq 'export NVM_DIR="$HOME/.nvm"' "$HOME/.bashrc"; then
+                  printf '\nexport NVM_DIR="$HOME/.nvm"\n' >> "$HOME/.bashrc";
+                fi;
+                if ! grep -Fq '$NVM_DIR/nvm.sh' "$HOME/.bashrc"; then
+                  printf '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"\n' >> "$HOME/.bashrc";
+                fi
+              - 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh" && nvm install 24 && node -v && npm -v'
+            test:
+              - 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh" && nvm use 24 >/dev/null && node -v && npm -v'
   - name: agents
     items:
       - name: codex
@@ -97,5 +116,5 @@ categories:
         description: Meta Muse Code CLI powered by Muse Spark.
         environments:
           default:
-            install: ["curl -fsSL https://dev.meta.ai/install.sh | sh"]
+            install: ["curl -fsSL https://dev.meta.ai/install.sh | bash"]
             test: [command -v muse]

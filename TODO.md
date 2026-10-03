@@ -18,18 +18,19 @@
   -[ ] uv, python
   -[ ] golang, gofmt
   -[ ] rust, cargo
+  -[X] javascript,node,npm
+  -[ ] typescript,bun
 -[ ] setup commands
   -[X] ssh keys setup in github
 -[ ] productivity apps and clis
   -[ ] todoist
--[ ] agents
-  -[ ] codex
-  -[ ] claude code
+-[X] agents
+  -[X] codex
+  -[X] claude code
   -[ ] cursor ide
-  -[ ] cursor-agent cli
-  -[ ] Pi
-  -[ ] Opencode
-  -[ ] Cursor agent
+  -[X] cursor-agent cli
+  -[X] Pi
+  -[X] Opencode
 -[ ] cli views
   -[ ] init config in right location
   -[ ] view status of config - available, installed etc by category and items

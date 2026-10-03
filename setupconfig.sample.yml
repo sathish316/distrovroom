@@ -6,6 +6,9 @@ categories:
   - name: cli-programming
     items:
       - github-cli
+  - name: programming-env
+    items:
+      - javascript
   - name: agents
     items:
       - codex
