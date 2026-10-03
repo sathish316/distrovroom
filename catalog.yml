@@ -2,26 +2,26 @@ categories:
   - name: setup
     items:
       - name: github-ssh-keys
-        aliases:
-          - GitHub SSH keys
-          - ssh keys for github
+        aliases: [ssh-keys, ssh keys, GitHub SSH keys]
         description: Generate an Ed25519 SSH key pair for GitHub.
         environments:
           debian:
             install:
               - sudo apt update
               - sudo apt install openssh-client
-              - &githubSSHKeygen 'install -d -m 700 "$HOME/.ssh" && ssh-keygen -t ed25519 -C {{.user_email}} -f "$HOME/.ssh/id_ed25519"'
+              - &githubSSHKeygen 'install -d -m 700 "$HOME/.ssh" && ssh-keygen -t ed25519 -C {{.email}} -f "$HOME/.ssh/id_ed25519"'
+            test:
+              - 'ls "$HOME"/.ssh/*.pub >/dev/null 2>&1'
           arch:
             install:
               - sudo pacman -S --needed openssh
               - *githubSSHKeygen
+            test:
+              - 'ls "$HOME"/.ssh/*.pub >/dev/null 2>&1'
   - name: cli-programming
     items:
       - name: github-cli
-        aliases:
-          - gh
-          - github cli
+        aliases: [gh, github cli]
         description: Work with GitHub repositories, pull requests, issues, and workflows from the terminal.
         environments:
           debian:
@@ -34,7 +34,7 @@ categories:
             config:
               - gh auth login
             test:
-              - gh --version
+              - command -v gh
           arch:
             install:
               - sudo pacman -S --needed github-cli
@@ -43,4 +43,59 @@ categories:
             config:
               - gh auth login
             test:
-              - gh --version
+              - command -v gh
+  - name: agents
+    items:
+      - name: codex
+        description: OpenAI Codex CLI.
+        environments:
+          default:
+            install: [npm install -g @openai/codex@latest]
+            upgrade: [npm install -g @openai/codex@latest]
+            test: [command -v codex]
+      - name: claude-code
+        aliases: [claude code]
+        description: Anthropic Claude Code CLI.
+        environments:
+          default:
+            install: ["curl -fsSL https://claude.ai/install.sh | bash"]
+            test: [command -v claude]
+      - name: cursor-agent-cli
+        aliases: [cursor-agent, cursor agent cli]
+        description: Cursor Agent CLI.
+        environments:
+          default:
+            install: ["curl -fsSL https://cursor.com/install | bash"]
+            upgrade: [cursor-agent update]
+            config: [cursor-agent login]
+            test: [command -v cursor-agent]
+      - name: pi
+        description: Pi coding agent CLI.
+        environments:
+          default:
+            install: ["curl -fsSL https://pi.dev/install.sh | sh"]
+            upgrade: [pi update]
+            test: [command -v pi]
+      - name: opencode
+        aliases: [open code]
+        description: OpenCode terminal coding agent.
+        environments:
+          default:
+            install: ["curl -fsSL https://opencode.ai/install | bash"]
+            test: [command -v opencode]
+      - name: grok-build
+        aliases: [grok build]
+        description: xAI Grok Build CLI.
+        environments:
+          default:
+            install: ["curl -fsSL https://x.ai/cli/install.sh | bash"]
+            upgrade: [grok update]
+            config: [grok login]
+            test: [command -v grok]
+      - name: muse-spark
+        aliases: [muse spark, muse-code]
+        description: Meta Muse Code CLI powered by Muse Spark.
+        environments:
+          default:
+            install: ["curl -fsSL https://dev.meta.ai/install.sh | sh"]
+            test: [command -v muse]

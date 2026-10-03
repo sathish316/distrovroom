@@ -8,7 +8,10 @@ It's originally built for linux distros, but also happens to work for mac and wi
 
 # Config manual
 
-Copy `setupconfig.sample.yml` to `~/.config/distrovroom/setupconfig.yml` and select the catalog items you want for your environment. Run `distro-vroom apply <category> [item]` to install one item or every selected item in a category.
+Create a config with `distro-vroom config init-from-sample`, or use `config init-empty` for SSH keys, GitHub CLI, and Codex. Set `environment` to `arch` or `debian` in the config.
+
+Use `config list`, `config add <category> <item>`, and `config remove <category> <item>` to manage selections. Run `catalog commands` to see commands, `status` to check installations, or `apply <category> [item]` to install selected items.
+
 
 ## Setup
 
@@ -68,7 +71,3 @@ Copy `setupconfig.sample.yml` to `~/.config/distrovroom/setupconfig.yml` and sel
 ## Other config
 
 - gitconfig
-
-# Getting started
-
-See the [getting started guide](docs/getting-started.md) for build, catalog, and custom-catalog instructions.
