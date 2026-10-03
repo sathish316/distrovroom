@@ -3,6 +3,7 @@ package main
 import "github.com/spf13/cobra"
 
 var catalogPath string
+var configPath string
 
 func newRootCommand() *cobra.Command {
 	root := &cobra.Command{
@@ -12,6 +13,7 @@ func newRootCommand() *cobra.Command {
 		SilenceUsage:  true,
 	}
 	root.PersistentFlags().StringVar(&catalogPath, "catalog", "", "path to a catalog YAML file")
-	root.AddCommand(newCatalogCommand())
+	root.PersistentFlags().StringVar(&configPath, "config-file", "", "path to the setup config YAML file")
+	root.AddCommand(newCatalogCommand(), newConfigCommand(), newStatusCommand())
 	return root
 }

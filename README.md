@@ -8,7 +8,9 @@ It's originally built for linux distros, but also happens to work for mac and wi
 
 # Config manual
 
-To use distro-vroom, copy the config file setupconfig.sample.yml to ~/.config/distrovroom/mysetupconfig.yml, customize it and use distro-vroom cli to add apps, utils, programming environments from its catalog to your config. Once a specific tool is added to your config, you can apply your config to install or upgrade it.
+Create the sample config with `distro-vroom config init-from-sample`, or create a minimal `setupconfig.empty.yml` in the current directory with `distro-vroom config init-empty`. The sample selects SSH keys, GitHub CLI, and all seven CLI agents. Config files contain only selected category and item names; install commands stay in the catalog.
+
+Use `config list`, `config add <category> <item>`, and `config remove <category> <item>` to manage selections. Use `catalog commands` to see the catalog commands for those selections and `status` to check local installation state. See the [getting started guide](docs/getting-started.md) for examples.
 
 ## Setup
 

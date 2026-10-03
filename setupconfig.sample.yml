@@ -1,0 +1,16 @@
+categories:
+  - name: setup
+    items:
+      - ssh-keys
+  - name: cli-programming
+    items:
+      - github-cli
+  - name: agents
+    items:
+      - codex
+      - claude-code
+      - cursor-agent-cli
+      - pi
+      - opencode
+      - grok-build
+      - muse-spark

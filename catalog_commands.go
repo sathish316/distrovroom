@@ -20,6 +20,7 @@ func newCatalogCommand() *cobra.Command {
 		newBrowseCategoryCommand(),
 		newShowCommand(),
 		newSearchCommand(),
+		newCatalogCommandsCommand(),
 	)
 	return catalog
 }
@@ -196,12 +197,11 @@ func printItemDetails(out io.Writer, category catalogCategory, item catalogItem)
 			return err
 		}
 	}
-	environments := make([]string, 0, len(supportedEnvironmentNames))
-	for _, environment := range supportedEnvironmentNames {
-		if _, ok := item.Environments[environment]; ok {
-			environments = append(environments, environment)
-		}
+	environments := make([]string, 0, len(item.Environments))
+	for environment := range item.Environments {
+		environments = append(environments, environment)
 	}
+	sort.Strings(environments)
 	if len(environments) == 0 {
 		environments = append(environments, "none")
 	}
@@ -210,5 +210,3 @@ func printItemDetails(out io.Writer, category catalogCategory, item catalogItem)
 	}
 	return nil
 }
-
-var supportedEnvironmentNames = []string{"arch", "debian"}
