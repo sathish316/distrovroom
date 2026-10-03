@@ -12,6 +12,6 @@ func newRootCommand() *cobra.Command {
 		SilenceUsage:  true,
 	}
 	root.PersistentFlags().StringVar(&catalogPath, "catalog", "", "path to a catalog YAML file")
-	root.AddCommand(newCatalogCommand())
+	root.AddCommand(newCatalogCommand(), newSetupCommand())
 	return root
 }
