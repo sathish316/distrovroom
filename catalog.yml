@@ -75,15 +75,14 @@ categories:
             install: [sudo pacman -S --needed ghc cabal-install stack]
             test: [command -v stack, command -v ghci, command -v cabal]
       - name: idris
-        description: Idris 1 dependently typed programming language.
+        description: Idris 1 dependently typed programming language (1.3.3).
         environments:
           debian:
             install:
               - sudo apt update
-              - sudo apt install ghc cabal-install libgmp-dev
-              - cabal update
-              - 'cabal install idris --installdir="$HOME/.local/bin" --overwrite-policy=always'
-            test: ['test -x "$HOME/.local/bin/idris" || command -v idris']
+              - sudo apt install ghc cabal-install haskell-stack build-essential libgmp-dev libffi-dev zlib1g-dev libtinfo6
+              - 'stack --resolver lts-16.31 install idris-1.3.3 --local-bin-path "$HOME/.local/bin"'
+            test: [command -v cabal, '"$HOME/.local/bin/idris" --version']
           arch:
             install: [sudo pacman -S --needed idris]
             test: [command -v idris]
@@ -288,22 +287,16 @@ categories:
         environments:
           default:
             install:
-              - >-
-                [ "$(uname -m)" = x86_64 ] || { echo 'Todoist AppImage requires x86_64' >&2; exit 1; };
-                install -d "$HOME/.local/bin";
-                file="$(mktemp "$HOME/.local/bin/.todoist.XXXXXX")" || exit 1;
-                trap 'rm -f "$file"' 0;
-                curl -fL https://todoist.com/linux_app/appimage -o "$file" &&
-                chmod +x "$file" && mv -f "$file" "$HOME/.local/bin/todoist"
+              - sudo snap install todoist
               - npm install -g @doist/todoist-cli
               - td skill install codex
               - td skill install claude-code
               - td skill install cursor
               - td skill install pi
               - td skill install universal
-            upgrade: [npm install -g @doist/todoist-cli]
+            upgrade: [sudo snap refresh todoist, npm install -g @doist/todoist-cli]
             config: [td auth login]
             test:
-              - 'test -x "$HOME/.local/bin/todoist"'
+              - test -x /snap/bin/todoist
               - command -v td
               - 'test -f "$HOME/.codex/skills/todoist-cli/SKILL.md"'
