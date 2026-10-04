@@ -9,6 +9,10 @@ categories:
   - name: programming-env
     items:
       - javascript
+  - name: editors
+    items:
+      - zed
+      - cursor
   - name: agents
     items:
       - codex
@@ -18,3 +22,6 @@ categories:
       - opencode
       - grok-build
       - muse-spark
+  - name: personal-agents
+    items:
+      - grok-bot

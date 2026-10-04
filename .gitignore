@@ -3,3 +3,4 @@
 .cache
 alias
 versions
+docs/*.html
