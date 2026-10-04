@@ -39,3 +39,5 @@
   -[ ] view status of config - available, installed etc by category and items
 -[ ] editor config
   -[ ] zed auto save
+-[ ] UX
+  -[ ] interactive tui to select items from catalog by category, add to config, install, update etc

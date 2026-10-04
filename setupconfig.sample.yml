@@ -9,6 +9,9 @@ categories:
   - name: programming-env
     items:
       - javascript
+      - haskell
+      - idris
+      - rust
   - name: editors
     items:
       - zed
@@ -25,3 +28,10 @@ categories:
   - name: personal-agents
     items:
       - grok-bot
+  - name: music
+    items:
+      - spotify
+  - name: productivity
+    items:
+      - obsidian
+      - todoist

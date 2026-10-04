@@ -52,8 +52,8 @@ func TestSampleConfigAndSelectedCatalogCommands(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(selected) != 13 {
-		t.Fatalf("got %d selected items, want 13", len(selected))
+	if len(selected) != 19 {
+		t.Fatalf("got %d selected items, want 19", len(selected))
 	}
 	if len(config.Categories) != len(catalog.Categories) {
 		t.Fatalf("sample has %d categories, catalog has %d", len(config.Categories), len(catalog.Categories))
