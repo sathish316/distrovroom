@@ -8,9 +8,9 @@ It's originally built for linux distros, but also happens to work for mac and wi
 
 # Config manual
 
-Run `./distro-vroom configure init-from-sample` to create `~/.config/distrovroom/config.yml` with every catalog item, or `./distro-vroom configure init-from-empty` for GitHub SSH keys, GitHub CLI, and Codex. Both commands refuse to overwrite an existing file. Use `--config-file path/to/config.yml` for another location, then set `environment` to `arch`, `debian`, or `macos` for macOS-only items such as cmux.
+Run `./distro-vroom config init-from-sample` to create `~/.config/distrovroom/config.yml` with every catalog item, or `./distro-vroom config init-from-empty` for GitHub SSH keys, GitHub CLI, and Codex. Both commands refuse to overwrite an existing file. Use `--config-file path/to/config.yml` for another location, then set `environment` to `arch`, `debian`, or `macos` for macOS-only items such as cmux.
 
-Use `configure list`, `configure add <category> <item>`, and `configure remove <category> <item>` to manage selections. Run `catalog commands` to see commands, `status` to check installations, or `apply <category> [item]` to install selected items.
+Use `config show` to open the config in your editor (`$VISUAL` or `$EDITOR`), `config list`, `config add <category> <item>`, and `config remove <category> <item>` to manage selections. Run `catalog commands` to see commands, `status` to check installations, or `apply <category> [item]` to install selected items.
 
 ## Setup
 
