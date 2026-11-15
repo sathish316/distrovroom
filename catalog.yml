@@ -124,6 +124,49 @@ categories:
             install: ["curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"]
             upgrade: ['"$HOME/.cargo/bin/rustup" update']
             test: ['. "$HOME/.cargo/env" && command -v rustc && command -v cargo']
+      - name: sdkman
+        description: SDKMAN to install and manage JVM SDKs (Java, Kotlin, Gradle, Maven, etc.).
+        environments:
+          default:
+            install:
+              - 'command -v zip >/dev/null && command -v unzip >/dev/null || { command -v apt >/dev/null && sudo apt update && sudo apt install -y zip unzip curl; } || { command -v pacman >/dev/null && sudo pacman -S --needed zip unzip curl; }'
+              - 'curl -s "https://get.sdkman.io" | bash'
+              - >-
+                mkdir -p "$HOME/.local/bin";
+                printf '%s\n' '#!/usr/bin/env bash' 'export SDKMAN_DIR="${SDKMAN_DIR:-$HOME/.sdkman}"' '. "$SDKMAN_DIR/bin/sdkman-init.sh"' 'sdk "$@"' > "$HOME/.local/bin/sdk";
+                chmod +x "$HOME/.local/bin/sdk"
+            upgrade:
+              - 'export SDKMAN_DIR="$HOME/.sdkman"; . "$SDKMAN_DIR/bin/sdkman-init.sh" && sdk selfupdate'
+            test:
+              - 'export PATH="$HOME/.local/bin:$PATH"; command -v sdk && sdk version'
+      - name: java
+        description: Amazon Corretto 25 (Java 25 LTS) installed with SDKMAN.
+        environments:
+          default:
+            install:
+              - 'export SDKMAN_DIR="$HOME/.sdkman"; . "$SDKMAN_DIR/bin/sdkman-init.sh" && sdk install java 25.0.5.0+10-amzn < /dev/null && sdk default java 25.0.5.0+10-amzn'
+            test:
+              - 'export SDKMAN_DIR="$HOME/.sdkman"; . "$SDKMAN_DIR/bin/sdkman-init.sh" && sdk use java 25.0.5.0+10-amzn >/dev/null && java -version 2>&1 | grep -q "Corretto-25"'
+      - name: maven
+        description: Apache Maven build tool installed with SDKMAN.
+        environments:
+          default:
+            install:
+              - 'export SDKMAN_DIR="$HOME/.sdkman"; . "$SDKMAN_DIR/bin/sdkman-init.sh" && sdk install maven < /dev/null'
+            upgrade:
+              - 'export SDKMAN_DIR="$HOME/.sdkman"; . "$SDKMAN_DIR/bin/sdkman-init.sh" && sdk upgrade maven < /dev/null'
+            test:
+              - 'export SDKMAN_DIR="$HOME/.sdkman"; . "$SDKMAN_DIR/bin/sdkman-init.sh" && command -v mvn'
+      - name: gradle
+        description: Gradle build tool installed with SDKMAN.
+        environments:
+          default:
+            install:
+              - 'export SDKMAN_DIR="$HOME/.sdkman"; . "$SDKMAN_DIR/bin/sdkman-init.sh" && sdk install gradle < /dev/null'
+            upgrade:
+              - 'export SDKMAN_DIR="$HOME/.sdkman"; . "$SDKMAN_DIR/bin/sdkman-init.sh" && sdk upgrade gradle < /dev/null'
+            test:
+              - 'export SDKMAN_DIR="$HOME/.sdkman"; . "$SDKMAN_DIR/bin/sdkman-init.sh" && command -v gradle'
   - name: programming-frameworks
     items:
       - name: vite
@@ -197,6 +240,14 @@ categories:
             install: [brew install neovim]
             upgrade: [brew upgrade neovim]
             test: [command -v nvim]
+      - name: intellij-idea-community
+        aliases: [intellij, idea]
+        description: IntelliJ IDEA Community Edition for Java and Kotlin, installed from the JetBrains Snap.
+        environments:
+          debian:
+            install: [sudo snap install intellij-idea-community --classic]
+            upgrade: [sudo snap refresh intellij-idea-community]
+            test: [test -x /snap/bin/intellij-idea-community]
   - name: browsers
     items:
       - name: google-chrome
@@ -536,3 +587,10 @@ categories:
               - test -x /snap/bin/todoist
               - command -v td
               - 'test -f "$HOME/.codex/skills/todoist-cli/SKILL.md"'
+      - name: tomat
+        description: Pomodoro timer with a background daemon, built for status bars such as waybar.
+        environments:
+          default:
+            install: ["curl --proto '=https' --tlsv1.2 -sSf https://tomat.cc/install | sh"]
+            upgrade: ["curl --proto '=https' --tlsv1.2 -sSf https://tomat.cc/install | sh"]
+            test: ['command -v tomat || test -x "$HOME/.local/bin/tomat"']

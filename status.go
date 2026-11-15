@@ -30,7 +30,7 @@ func checkInstalled(item catalogItem) installationStatus {
 		passed := true
 		for _, testCommand := range commands.Test {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			command := exec.CommandContext(ctx, "/bin/sh", "-c", testCommand)
+			command := exec.CommandContext(ctx, "/bin/bash", "-c", testCommand)
 			command.Stdout = io.Discard
 			command.Stderr = io.Discard
 			if err := command.Run(); err != nil {

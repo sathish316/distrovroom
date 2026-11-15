@@ -53,7 +53,7 @@ func TestJavaScriptShellSetupIsIdempotentAndStatusUsesNvm(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	for range 2 {
-		output, err := exec.Command("sh", "-c", commands.Install[1]).CombinedOutput()
+		output, err := exec.Command("bash", "-c", commands.Install[1]).CombinedOutput()
 		if err != nil {
 			t.Fatalf("configure bashrc: %v: %s", err, output)
 		}
@@ -113,7 +113,7 @@ func TestMuseSparkInstallerRunsWithBash(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(binDir, "curl"), []byte(fakeCurl), 0700); err != nil {
 		t.Fatal(err)
 	}
-	process := exec.Command("sh", "-c", install[0])
+	process := exec.Command("bash", "-c", install[0])
 	process.Env = append(os.Environ(), "PATH="+binDir+":"+os.Getenv("PATH"), "MUSE_TEST_MARKER="+marker)
 	if output, err := process.CombinedOutput(); err != nil {
 		t.Fatalf("run Muse Spark installer: %v: %s", err, output)
