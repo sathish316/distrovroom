@@ -26,7 +26,13 @@ type catalogItem struct {
 	Name         string                         `yaml:"name"`
 	Aliases      []string                       `yaml:"aliases"`
 	Description  string                         `yaml:"description"`
+	Check        itemCheck                      `yaml:"check"`
 	Environments map[string]environmentCommands `yaml:"environments"`
+}
+
+type itemCheck struct {
+	Binary string `yaml:"binary"`
+	SSHKey bool   `yaml:"ssh-key"`
 }
 
 type environmentCommands struct {
