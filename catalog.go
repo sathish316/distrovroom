@@ -95,7 +95,3 @@ func findItem(category catalogCategory, name string) (catalogItem, bool) {
 func canonicalizeName(value string) string {
 	return strings.Join(strings.Fields(strings.ToLower(strings.TrimSpace(value))), "-")
 }
-
-func normalizedText(value string) string {
-	return strings.Join(strings.Fields(strings.ToLower(strings.TrimSpace(value))), " ")
-}
