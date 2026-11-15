@@ -19,6 +19,35 @@ func runCLI(t *testing.T, args ...string) (string, error) {
 	return out.String(), err
 }
 
+func TestSampleConfigAndSelectedCatalogCommands(t *testing.T) {
+	catalog, err := loadCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	config, err := decodeConfig(sampleConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+	selected, err := resolveConfig(config, catalog)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(selected) != 9 {
+		t.Fatalf("got %d selected items, want 9", len(selected))
+	}
+	path := filepath.Join(t.TempDir(), "setupconfig.yml")
+	if out, err := runCLI(t, "--config-file", path, "config", "init-from-sample"); err != nil {
+		t.Fatalf("init: %v: %s", err, out)
+	}
+	out, err := runCLI(t, "--config-file", path, "catalog", "commands", "agents", "pi")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "curl -fsSL https://pi.dev/install.sh | sh") || strings.Contains(out, "@openai/codex") {
+		t.Fatalf("unexpected selected commands: %s", out)
+	}
+}
+
 func TestConfigAddRemoveAndAliasDeduplication(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "setupconfig.yml")
 	if err := os.WriteFile(path, []byte("categories: []\n"), 0600); err != nil {
