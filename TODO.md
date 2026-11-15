@@ -14,6 +14,10 @@
   -[ ] emacs
   -[ ] worktrunk
   -[ ] hunk
+-[ ] terminal multiplexers and config
+  -[ ] tmux
+  -[ ] herdr
+  -[ ] cmux
 -[ ] programming languages and tools
   -[ ] sdk man java, maven, gradle, scala, clojure, kotlin
   -[ ] uv, python

@@ -18,6 +18,37 @@ categories:
               - *githubSSHKeygen
             test:
               - 'ls "$HOME"/.ssh/*.pub >/dev/null 2>&1'
+      - name: pkg-config
+        description: Tool that reports compiler and linker flags for installed libraries.
+        environments:
+          debian:
+            install:
+              - sudo apt update
+              - sudo apt install pkg-config
+            upgrade:
+              - sudo apt update
+              - sudo apt install --only-upgrade pkg-config
+            test: [command -v pkg-config]
+          arch:
+            install: [sudo pacman -S --needed pkgconf]
+            upgrade: [sudo pacman -Syu pkgconf]
+            test: [command -v pkg-config]
+      - name: libsecret-dev
+        aliases: [libsecret-1-dev, libsecret]
+        description: libsecret development headers for building apps that use the system keyring.
+        environments:
+          debian:
+            install:
+              - sudo apt update
+              - sudo apt install libsecret-1-dev
+            upgrade:
+              - sudo apt update
+              - sudo apt install --only-upgrade libsecret-1-dev
+            test: [dpkg -s libsecret-1-dev]
+          arch:
+            install: [sudo pacman -S --needed libsecret]
+            upgrade: [sudo pacman -Syu libsecret]
+            test: [pacman -Q libsecret]
   - name: cli-programming
     items:
       - name: github-cli
@@ -93,6 +124,23 @@ categories:
             install: ["curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"]
             upgrade: ['"$HOME/.cargo/bin/rustup" update']
             test: ['. "$HOME/.cargo/env" && command -v rustc && command -v cargo']
+  - name: programming-frameworks
+    items:
+      - name: vite
+        description: Vite frontend build tool and dev server.
+        environments:
+          default:
+            install: [npm install -g vite@latest]
+            upgrade: [npm install -g vite@latest]
+            test: [command -v vite]
+      - name: vite-plus
+        aliases: [vp, vite+]
+        description: Vite+ unified web toolchain and the global vp CLI.
+        environments:
+          default:
+            install: ["curl -fsSL https://vite.plus | bash"]
+            upgrade: [vp upgrade]
+            test: ['command -v vp || test -x "$HOME/.vite-plus/bin/vp"']
   - name: editors
     items:
       - name: zed
@@ -149,6 +197,36 @@ categories:
             install: [brew install neovim]
             upgrade: [brew upgrade neovim]
             test: [command -v nvim]
+  - name: browsers
+    items:
+      - name: google-chrome
+        description: Google Chrome web browser.
+        environments:
+          debian:
+            install:
+              - sudo apt update
+              - sudo apt install curl
+              - >-
+                file="$(mktemp --suffix=.deb)" || exit 1;
+                trap 'rm -f "$file"' 0;
+                curl -fL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o "$file" && sudo apt install "$file"
+            upgrade:
+              - sudo apt update
+              - sudo apt install --only-upgrade google-chrome-stable
+            test: ['command -v google-chrome-stable || command -v google-chrome']
+          arch:
+            install:
+              - sudo pacman -S --needed base-devel git
+              - >-
+                if command -v yay >/dev/null; then yay -S --needed google-chrome;
+                elif command -v paru >/dev/null; then paru -S --needed google-chrome;
+                else
+                  dir="$(mktemp -d)" || exit 1;
+                  trap 'rm -rf "$dir"' 0;
+                  git clone https://aur.archlinux.org/google-chrome.git "$dir/google-chrome" &&
+                  (cd "$dir/google-chrome" && makepkg -si);
+                fi
+            test: ['command -v google-chrome-stable || command -v google-chrome']
   - name: terminals
     items:
       - name: ghostty
@@ -220,6 +298,40 @@ categories:
             install: [sudo pacman -S --needed chafa]
             upgrade: [sudo pacman -Syu chafa]
             test: [command -v chafa]
+      - name: wl-clipboard
+        description: Wayland clipboard utilities (wl-copy and wl-paste).
+        environments:
+          debian:
+            install:
+              - sudo apt update
+              - sudo apt install wl-clipboard
+            upgrade:
+              - sudo apt update
+              - sudo apt install --only-upgrade wl-clipboard
+            test: [command -v wl-copy]
+          arch:
+            install: [sudo pacman -S --needed wl-clipboard]
+            upgrade: [sudo pacman -Syu wl-clipboard]
+            test: [command -v wl-copy]
+      - name: tree
+        description: Directory listing tool that prints folders as an indented tree.
+        environments:
+          debian:
+            install:
+              - sudo apt update
+              - sudo apt install tree
+            upgrade:
+              - sudo apt update
+              - sudo apt install --only-upgrade tree
+            test: [command -v tree]
+          arch:
+            install: [sudo pacman -S --needed tree]
+            upgrade: [sudo pacman -Syu tree]
+            test: [command -v tree]
+          macos:
+            install: [brew install tree]
+            upgrade: [brew upgrade tree]
+            test: [command -v tree]
   - name: agents
     items:
       - name: codex
@@ -236,6 +348,27 @@ categories:
           default:
             install: ["curl -fsSL https://claude.ai/install.sh | bash"]
             test: [command -v claude]
+      - name: claude-agent-acp
+        description: ACP adapter that lets editors such as Zed run Claude through the Claude Agent SDK.
+        environments:
+          default:
+            install: [npm install -g @agentclientprotocol/claude-agent-acp@latest]
+            upgrade: [npm install -g @agentclientprotocol/claude-agent-acp@latest]
+            test: [command -v claude-agent-acp]
+      - name: codex-acp
+        description: ACP adapter that lets editors such as Zed run Codex.
+        environments:
+          default:
+            install: [npm install -g @agentclientprotocol/codex-acp@latest]
+            upgrade: [npm install -g @agentclientprotocol/codex-acp@latest]
+            test: [command -v codex-acp]
+      - name: pi-acp
+        description: ACP adapter that lets editors such as Zed run the Pi coding agent.
+        environments:
+          default:
+            install: [npm install -g pi-acp@latest]
+            upgrade: [npm install -g pi-acp@latest]
+            test: [command -v pi-acp]
       - name: cursor-agent-cli
         aliases: [cursor-agent, cursor agent cli]
         description: Cursor Agent CLI.
@@ -275,6 +408,13 @@ categories:
           default:
             install: ["curl -fsSL https://dev.meta.ai/install.sh | bash"]
             test: [command -v muse]
+      - name: fx
+        description: fx tiny, open, native coding agent from Vercel Labs.
+        environments:
+          default:
+            install: ["curl -fsSL https://fx.sh/setup.sh | bash"]
+            upgrade: [fx upgrade]
+            test: ['command -v fx || test -x "$HOME/.local/bin/fx"']
   - name: personal-agents
     items:
       - name: grok-bot
