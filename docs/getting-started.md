@@ -1,6 +1,6 @@
 # Getting started
 
-DistroVroom is a Go CLI for selecting tools in a setup config, browsing their install guidance, and checking which selected tools are present. Catalog commands are printed for review; DistroVroom does not execute them.
+DistroVroom is a Go CLI for selecting tools in a setup config, browsing their install guidance, and checking which selected tools are present. Install, upgrade, and configuration commands are printed for review. Status runs only the catalog test commands.
 
 ## Build
 
@@ -61,9 +61,10 @@ Item aliases work with `add` and `remove`. For example, `gh` resolves to `github
 ./distro-vroom catalog commands
 ./distro-vroom catalog commands agents
 ./distro-vroom catalog commands agents codex
+./distro-vroom catalog commands setup ssh-keys --email you@example.com
 ```
 
-The browse and search commands show all available catalog entries so you can discover items to add. `catalog commands` reads the setup config and shows commands only for selected entries. Commands are grouped by environment; `default` applies across supported systems. The commands are guidance to review before running in a shell.
+The browse and search commands show all available catalog entries so you can discover items to add. `catalog commands` reads the setup config and shows commands only for selected entries. Commands are grouped by environment; `default` applies across supported systems. The SSH key command uses a Go template and fills its email placeholder from `--email`. Without that flag, the output shows `EMAIL_ADDRESS` as a placeholder. The commands are guidance to review before running in a shell.
 
 ## Check status
 
@@ -73,7 +74,7 @@ The browse and search commands show all available catalog entries so you can dis
 ./distro-vroom status list agents --color=never
 ```
 
-Status checks only selected items. It looks for each CLI executable on `PATH` and for SSH public keys in `~/.ssh`. It does not run catalog commands or contact services. Colors appear on a terminal by default: green means installed, red means not installed, and yellow means the catalog has no detection rule. Use `--color=always` or `--color=never` to override.
+Status checks only selected items by running their catalog `test` commands and checking the exit code. The bundled tests use `command -v` for CLIs and look for an SSH public key in `~/.ssh`; they do not contact services. Colors appear on a terminal by default: green means installed, red means not installed, and yellow means the catalog has no test command. Use `--color=always` or `--color=never` to override.
 
 ## Custom files
 
@@ -84,4 +85,4 @@ Use `--config-file` to select another setup config and `--catalog` to load a cus
 ./distro-vroom --catalog ./my-catalog.yml catalog list-categories
 ```
 
-A catalog contains categories, items, a read-only `check` rule, and commands by environment. `check.binary` looks up an executable; `check.ssh-key` looks for a public SSH key. When neither is present, status is `unknown`.
+A catalog contains categories, items, and commands by environment. The `test` commands determine status: an exit code of zero means installed, a nonzero code means not installed, and no test means unknown. Custom catalog test commands are executed by `status`, so review them before using a custom catalog.

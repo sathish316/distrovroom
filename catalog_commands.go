@@ -201,7 +201,6 @@ func printItemDetails(out io.Writer, category catalogCategory, item catalogItem)
 	for environment := range item.Environments {
 		environments = append(environments, environment)
 	}
-	sort.Strings(environments)
 	if len(environments) == 0 {
 		environments = append(environments, "none")
 	}
