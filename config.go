@@ -1,0 +1,139 @@
+package main
+
+import (
+	"bytes"
+	_ "embed"
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"gopkg.in/yaml.v3"
+)
+
+//go:embed setupconfig.sample.yml
+var sampleConfig []byte
+
+type setupConfig struct {
+	Categories []configCategory `yaml:"categories"`
+}
+
+type configCategory struct {
+	Name  string   `yaml:"name"`
+	Items []string `yaml:"items"`
+}
+
+type selectedItem struct {
+	category catalogCategory
+	item     catalogItem
+}
+
+func activeConfigPath() (string, error) {
+	if configPath != "" {
+		return configPath, nil
+	}
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return "", fmt.Errorf("find user config directory: %w", err)
+	}
+	return filepath.Join(dir, "distrovroom", "setupconfig.yml"), nil
+}
+
+func decodeConfig(raw []byte) (setupConfig, error) {
+	var config setupConfig
+	decoder := yaml.NewDecoder(bytes.NewReader(raw))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(&config); err != nil {
+		return setupConfig{}, fmt.Errorf("parse setup config: %w", err)
+	}
+	return config, nil
+}
+
+func loadConfig() (setupConfig, error) {
+	path, err := activeConfigPath()
+	if err != nil {
+		return setupConfig{}, err
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return setupConfig{}, fmt.Errorf("read setup config %q: %w (run `distro-vroom config init-from-sample` first)", path, err)
+	}
+	return decodeConfig(raw)
+}
+
+// resolveConfig validates references and returns items in config order.
+func resolveConfig(config setupConfig, catalog catalogFile) ([]selectedItem, error) {
+	selected := make([]selectedItem, 0)
+	seenCategories := make(map[string]bool)
+	for _, configuredCategory := range config.Categories {
+		category, ok := findCategory(catalog, configuredCategory.Name)
+		if !ok {
+			return nil, fmt.Errorf("config category %q is not in the catalog", configuredCategory.Name)
+		}
+		categoryKey := canonicalizeName(category.Name)
+		if seenCategories[categoryKey] {
+			return nil, fmt.Errorf("config category %q is duplicated", category.Name)
+		}
+		seenCategories[categoryKey] = true
+		seenItems := make(map[string]bool)
+		for _, itemName := range configuredCategory.Items {
+			item, ok := findItem(category, itemName)
+			if !ok {
+				return nil, fmt.Errorf("config item %q is not in catalog category %q", itemName, category.Name)
+			}
+			itemKey := canonicalizeName(item.Name)
+			if seenItems[itemKey] {
+				return nil, fmt.Errorf("config item %q is duplicated in category %q", item.Name, category.Name)
+			}
+			seenItems[itemKey] = true
+			selected = append(selected, selectedItem{category: category, item: item})
+		}
+	}
+	return selected, nil
+}
+
+func writeNewFile(path string, raw []byte) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+		return fmt.Errorf("create config directory: %w", err)
+	}
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		return fmt.Errorf("create %q: %w", path, err)
+	}
+	defer file.Close()
+	if _, err := file.Write(raw); err != nil {
+		return fmt.Errorf("write %q: %w", path, err)
+	}
+	return nil
+}
+
+func saveConfig(config setupConfig) error {
+	path, err := activeConfigPath()
+	if err != nil {
+		return err
+	}
+	raw, err := yaml.Marshal(config)
+	if err != nil {
+		return fmt.Errorf("encode setup config: %w", err)
+	}
+	// Write beside the destination so rename replaces it atomically.
+	file, err := os.CreateTemp(filepath.Dir(path), ".setupconfig-*")
+	if err != nil {
+		return fmt.Errorf("create temporary config: %w", err)
+	}
+	defer os.Remove(file.Name())
+	if err := file.Chmod(0600); err != nil {
+		file.Close()
+		return err
+	}
+	if _, err := file.Write(raw); err != nil {
+		file.Close()
+		return err
+	}
+	if err := file.Close(); err != nil {
+		return err
+	}
+	if err := os.Rename(file.Name(), path); err != nil {
+		return fmt.Errorf("save config %q: %w", path, err)
+	}
+	return nil
+}

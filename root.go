@@ -3,6 +3,7 @@ package main
 import "github.com/spf13/cobra"
 
 var catalogPath string
+var configPath string
 
 func newRootCommand() *cobra.Command {
 	root := &cobra.Command{
