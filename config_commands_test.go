@@ -110,3 +110,21 @@ func TestInitEmptyHasOnlyBasicItems(t *testing.T) {
 	}
 }
 
+func TestStatusUsesReadOnlyChecksAndPlainOutput(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "setupconfig.yml")
+	if err := os.WriteFile(path, []byte("categories:\n  - name: agents\n    items: [codex, pi]\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	bin := t.TempDir()
+	if err := os.WriteFile(filepath.Join(bin, "codex"), []byte("#!/bin/sh\nexit 0\n"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", bin)
+	out, err := runCLI(t, "--config-file", path, "status", "list", "agents", "--color", "never")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "agents (1/2 installed)") || !strings.Contains(out, "installed  codex") || !strings.Contains(out, "not-installed  pi") || strings.Contains(out, "\x1b[") {
+		t.Fatalf("status: %s", out)
+	}
+}
