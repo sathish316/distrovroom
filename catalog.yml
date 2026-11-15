@@ -130,6 +130,39 @@ categories:
                 trap 'rm -f "$file"' 0;
                 curl -fL "$url" -o "$file" && chmod +x "$file" && mv -f "$file" "$HOME/.local/bin/cursor"
             test: ['command -v cursor || test -x "$HOME/.local/bin/cursor"']
+  - name: terminal-multiplexer
+    items:
+      - name: tmux
+        description: Terminal multiplexer for persistent sessions and split panes.
+        environments:
+          debian:
+            install:
+              - sudo apt update
+              - sudo apt install tmux
+            upgrade:
+              - sudo apt update
+              - sudo apt install --only-upgrade tmux
+            test: [command -v tmux]
+          arch:
+            install: [sudo pacman -S --needed tmux]
+            upgrade: [sudo pacman -Syu tmux]
+            test: [command -v tmux]
+      - name: herdr
+        description: Agent-aware terminal multiplexer with workspaces, tabs, and panes.
+        environments:
+          default:
+            install: ["curl -fsSL https://herdr.dev/install.sh | sh"]
+            upgrade: [herdr update]
+            test: [command -v herdr]
+      - name: cmux
+        description: Native macOS terminal with workspaces, split panes, and agent notifications.
+        environments:
+          macos:
+            install:
+              - brew tap manaflow-ai/cmux
+              - brew install --cask cmux
+            upgrade: [brew upgrade --cask cmux]
+            test: ['test -d /Applications/cmux.app || test -d "$HOME/Applications/cmux.app"']
   - name: agents
     items:
       - name: codex
