@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
 func newConfigCommand() *cobra.Command {
@@ -21,25 +20,6 @@ func newConfigCommand() *cobra.Command {
 					return err
 				}
 				_, err = fmt.Fprintf(cmd.OutOrStdout(), "Created %s\n", path)
-				return err
-			},
-		},
-		&cobra.Command{
-			Use: "init-empty", Short: "Create a minimal setupconfig.empty.yml in the current directory", Args: cobra.NoArgs,
-			RunE: func(cmd *cobra.Command, _ []string) error {
-				basic := setupConfig{Environment: "arch", Categories: []configCategory{
-					{Name: "setup", Items: []string{"ssh-keys"}},
-					{Name: "cli-programming", Items: []string{"github-cli"}},
-					{Name: "agents", Items: []string{"codex"}},
-				}}
-				raw, err := yaml.Marshal(basic)
-				if err != nil {
-					return err
-				}
-				if err := writeNewFile("setupconfig.empty.yml", raw); err != nil {
-					return err
-				}
-				_, err = fmt.Fprintln(cmd.OutOrStdout(), "Created setupconfig.empty.yml")
 				return err
 			},
 		},
