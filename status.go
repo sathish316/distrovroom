@@ -1,12 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -19,28 +20,35 @@ const (
 	unknown      installationStatus = "unknown"
 )
 
-func checkInstalled(check itemCheck) installationStatus {
-	if check.Binary != "" {
-		if _, err := exec.LookPath(check.Binary); err == nil {
+func checkInstalled(item catalogItem) installationStatus {
+	hasTest := false
+	for _, commands := range item.Environments {
+		if len(commands.Test) == 0 {
+			continue
+		}
+		hasTest = true
+		passed := true
+		for _, testCommand := range commands.Test {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			command := exec.CommandContext(ctx, "/bin/sh", "-c", testCommand)
+			command.Stdout = io.Discard
+			command.Stderr = io.Discard
+			if err := command.Run(); err != nil {
+				passed = false
+			}
+			cancel()
+			if !passed {
+				break
+			}
+		}
+		if passed {
 			return installed
 		}
-		return notInstalled
 	}
-	if check.SSHKey {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return unknown
-		}
-		matches, err := filepath.Glob(filepath.Join(home, ".ssh", "*.pub"))
-		if err != nil {
-			return unknown
-		}
-		if len(matches) > 0 {
-			return installed
-		}
-		return notInstalled
+	if !hasTest {
+		return unknown
 	}
-	return unknown
+	return notInstalled
 }
 
 func newStatusCommand() *cobra.Command {
@@ -66,12 +74,17 @@ func newStatusCommand() *cobra.Command {
 			if len(args) == 1 && canonicalizeName(category.Name) != canonicalizeName(args[0]) {
 				continue
 			}
-			var items []selectedItem
+			type itemStatus struct {
+				name  string
+				state installationStatus
+			}
+			var items []itemStatus
 			count := 0
 			for _, selection := range selected {
 				if canonicalizeName(selection.category.Name) == canonicalizeName(category.Name) {
-					items = append(items, selection)
-					if checkInstalled(selection.item.Check) == installed {
+					state := checkInstalled(selection.item)
+					items = append(items, itemStatus{name: selection.item.Name, state: state})
+					if state == installed {
 						count++
 					}
 				}
@@ -79,9 +92,8 @@ func newStatusCommand() *cobra.Command {
 			if _, err := fmt.Fprintf(out, "%s (%d/%d installed)\n", category.Name, count, len(items)); err != nil {
 				return err
 			}
-			for _, selection := range items {
-				state := checkInstalled(selection.item.Check)
-				if _, err := fmt.Fprintf(out, "  %s  %s\n", colorize(string(state), state, useColor), selection.item.Name); err != nil {
+			for _, item := range items {
+				if _, err := fmt.Fprintf(out, "  %s  %s\n", colorize(string(item.state), item.state, useColor), item.name); err != nil {
 					return err
 				}
 			}

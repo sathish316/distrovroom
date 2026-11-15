@@ -48,6 +48,27 @@ func TestSampleConfigAndSelectedCatalogCommands(t *testing.T) {
 	}
 }
 
+func TestCatalogCommandEmailTemplate(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "setupconfig.yml")
+	if err := os.WriteFile(path, []byte("categories:\n  - name: setup\n    items: [ssh-keys]\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "--config-file", path, "catalog", "commands", "setup", "ssh-keys", "--email", "you@example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "ssh-keygen -t ed25519 -C 'you@example.com'") || strings.Contains(out, "{{") {
+		t.Fatalf("email was not rendered: %s", out)
+	}
+	out, err = runCLI(t, "--config-file", path, "catalog", "commands", "setup", "ssh-keys")
+	if err != nil || !strings.Contains(out, "'EMAIL_ADDRESS'") {
+		t.Fatalf("missing email placeholder: %v: %s", err, out)
+	}
+	if _, err := runCLI(t, "--config-file", path, "catalog", "commands", "setup", "ssh-keys", "--email", "invalid"); err == nil {
+		t.Fatal("expected invalid email to be rejected")
+	}
+}
+
 func TestConfigAddRemoveAndAliasDeduplication(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "setupconfig.yml")
 	if err := os.WriteFile(path, []byte("categories: []\n"), 0600); err != nil {
@@ -110,7 +131,7 @@ func TestInitEmptyHasOnlyBasicItems(t *testing.T) {
 	}
 }
 
-func TestStatusUsesReadOnlyChecksAndPlainOutput(t *testing.T) {
+func TestStatusUsesCatalogTestsAndPlainOutput(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "setupconfig.yml")
 	if err := os.WriteFile(path, []byte("categories:\n  - name: agents\n    items: [codex, pi]\n"), 0600); err != nil {
 		t.Fatal(err)
@@ -126,5 +147,22 @@ func TestStatusUsesReadOnlyChecksAndPlainOutput(t *testing.T) {
 	}
 	if !strings.Contains(out, "agents (1/2 installed)") || !strings.Contains(out, "installed  codex") || !strings.Contains(out, "not-installed  pi") || strings.Contains(out, "\x1b[") {
 		t.Fatalf("status: %s", out)
+	}
+}
+
+func TestStatusUsesCatalogTestCommands(t *testing.T) {
+	item := catalogItem{Environments: map[string]environmentCommands{
+		"default": {Test: []string{"exit 0"}},
+	}}
+	if got := checkInstalled(item); got != installed {
+		t.Fatalf("passing test = %s, want installed", got)
+	}
+	item.Environments["default"] = environmentCommands{Test: []string{"exit 1"}}
+	if got := checkInstalled(item); got != notInstalled {
+		t.Fatalf("failing test = %s, want not-installed", got)
+	}
+	item.Environments["default"] = environmentCommands{}
+	if got := checkInstalled(item); got != unknown {
+		t.Fatalf("no test = %s, want unknown", got)
 	}
 }
