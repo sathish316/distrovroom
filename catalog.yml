@@ -415,6 +415,14 @@ categories:
             install: ["curl -fsSL https://fx.sh/setup.sh | bash"]
             upgrade: [fx upgrade]
             test: ['command -v fx || test -x "$HOME/.local/bin/fx"']
+      - name: herdr-app
+        aliases: [herdr desktop, herdr desktop app]
+        description: Herdr desktop app for running and monitoring coding agents, built on herdr-core.
+        environments:
+          default:
+            install: ["curl -fsSL https://releases.herdr.dev/app/install.sh | sh"]
+            upgrade: ["curl -fsSL https://releases.herdr.dev/app/install.sh | sh"]
+            test: ['command -v herdr-app || test -x "$HOME/.local/bin/herdr-app" || test -d "$HOME/Applications/Herdr.app" || test -d /Applications/Herdr.app']
   - name: personal-agents
     items:
       - name: grok-bot
