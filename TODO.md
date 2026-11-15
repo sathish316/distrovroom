@@ -9,8 +9,10 @@
 -[ ] programming tools and clis
   -[X] gh cli
   -[ ] zed editor
-  -[ ] neovim
+  -[ ] neovim and vim
   -[ ] emacs
+  -[ ] worktrunk
+  -[ ] hunk
 -[ ] programming languages and tools
   -[ ] sdk man java, maven, gradle, scala, clojure, kotlin
   -[ ] uv, python
@@ -31,3 +33,5 @@
 -[ ] cli views
   -[ ] init config in right location
   -[ ] view status of config - available, installed etc by category and items
+-[ ] editor config
+  -[ ] zed auto save

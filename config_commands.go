@@ -8,8 +8,22 @@ import (
 )
 
 func newConfigCommand() *cobra.Command {
-	config := &cobra.Command{Use: "config", Short: "Initialize and edit selected setup items"}
+	config := &cobra.Command{Use: "configure", Aliases: []string{"config"}, Short: "Initialize and edit selected setup items"}
 	config.AddCommand(
+		&cobra.Command{
+			Use: "init-from-empty", Short: "Copy the bundled minimal config to the active config path", Args: cobra.NoArgs,
+			RunE: func(cmd *cobra.Command, _ []string) error {
+				path, err := activeConfigPath()
+				if err != nil {
+					return err
+				}
+				if err := writeNewFile(path, emptyConfig); err != nil {
+					return err
+				}
+				_, err = fmt.Fprintf(cmd.OutOrStdout(), "Created %s\n", path)
+				return err
+			},
+		},
 		&cobra.Command{
 			Use: "init-empty", Short: "Create a minimal setupconfig.empty.yml in the current directory", Args: cobra.NoArgs,
 			RunE: func(cmd *cobra.Command, _ []string) error {
