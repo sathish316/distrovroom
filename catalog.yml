@@ -63,6 +63,43 @@ categories:
               - 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh" && nvm install 24 && node -v && npm -v'
             test:
               - 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh" && nvm use 24 >/dev/null && node -v && npm -v'
+  - name: editors
+    items:
+      - name: zed
+        description: Zed code editor.
+        environments:
+          default:
+            install: ["curl -f https://zed.dev/install.sh | sh"]
+            test: ['command -v zed || test -x "$HOME/.local/bin/zed"']
+      - name: cursor
+        description: Cursor AI code editor.
+        environments:
+          debian:
+            install:
+              - sudo apt update
+              - sudo apt install curl gnupg
+              - sudo install -d -m 0755 /etc/apt/keyrings
+              - 'curl -fsSL https://downloads.cursor.com/keys/anysphere.asc | gpg --dearmor | sudo tee /etc/apt/keyrings/cursor.gpg >/dev/null'
+              - 'echo "deb [arch=amd64,arm64 signed-by=/etc/apt/keyrings/cursor.gpg] https://downloads.cursor.com/aptrepo stable main" | sudo tee /etc/apt/sources.list.d/cursor.list >/dev/null'
+              - sudo apt update
+              - sudo apt install cursor
+            upgrade: [sudo apt update, sudo apt install --only-upgrade cursor]
+            test: [command -v cursor]
+          arch:
+            install:
+              - sudo pacman -S --needed curl jq
+              - >-
+                case "$(uname -m)" in
+                  x86_64) platform=linux-x64 ;;
+                  aarch64) platform=linux-arm64 ;;
+                  *) echo 'Unsupported architecture for Cursor' >&2; exit 1 ;;
+                esac;
+                url="$(curl -fsSL "https://api2.cursor.sh/updates/api/download/stable/$platform/cursor" | jq -er .downloadUrl)" || exit 1;
+                install -d "$HOME/.local/bin";
+                file="$(mktemp "$HOME/.local/bin/.cursor.XXXXXX")" || exit 1;
+                trap 'rm -f "$file"' 0;
+                curl -fL "$url" -o "$file" && chmod +x "$file" && mv -f "$file" "$HOME/.local/bin/cursor"
+            test: ['command -v cursor || test -x "$HOME/.local/bin/cursor"']
   - name: agents
     items:
       - name: codex
@@ -118,3 +155,40 @@ categories:
           default:
             install: ["curl -fsSL https://dev.meta.ai/install.sh | bash"]
             test: [command -v muse]
+  - name: personal-agents
+    items:
+      - name: grok-bot
+        aliases: [grok bot]
+        description: Grok Bot desktop app for personal AI teammates.
+        environments:
+          debian:
+            install:
+              - sudo apt update
+              - sudo apt install curl jq
+              - >-
+                case "$(uname -m)" in
+                  x86_64) platform=linux-x64 ;;
+                  aarch64) platform=linux-arm64 ;;
+                  *) echo 'Unsupported architecture for Grok Bot' >&2; exit 1 ;;
+                esac;
+                url="$(curl -fsSL "https://api2.cursor.sh/updates/api/download/stable/$platform/sand" | jq -er .debUrl)" || exit 1;
+                file="$(mktemp --suffix=.deb)" || exit 1;
+                trap 'rm -f "$file"' 0;
+                curl -fL "$url" -o "$file" && sudo apt install "$file"
+            upgrade: [sudo apt update, sudo apt install --only-upgrade grok-bot]
+            test: ["dpkg-query -W -f='${Status}' grok-bot 2>/dev/null | grep -qx 'install ok installed'"]
+          arch:
+            install:
+              - sudo pacman -S --needed curl jq
+              - >-
+                case "$(uname -m)" in
+                  x86_64) platform=linux-x64 ;;
+                  aarch64) platform=linux-arm64 ;;
+                  *) echo 'Unsupported architecture for Grok Bot' >&2; exit 1 ;;
+                esac;
+                url="$(curl -fsSL "https://api2.cursor.sh/updates/api/download/stable/$platform/sand" | jq -er .downloadUrl)" || exit 1;
+                install -d "$HOME/.local/bin";
+                file="$(mktemp "$HOME/.local/bin/.grok-bot.XXXXXX")" || exit 1;
+                trap 'rm -f "$file"' 0;
+                curl -fL "$url" -o "$file" && chmod +x "$file" && mv -f "$file" "$HOME/.local/bin/grok-bot"
+            test: ['command -v grok-bot || test -x "$HOME/.local/bin/grok-bot"']

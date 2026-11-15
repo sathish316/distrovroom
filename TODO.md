@@ -9,6 +9,7 @@
 -[ ] programming tools and clis
   -[X] gh cli
   -[ ] zed editor
+  -[ ] cursor
   -[ ] neovim and vim
   -[ ] emacs
   -[ ] worktrunk
@@ -31,6 +32,8 @@
   -[X] cursor-agent cli
   -[X] Pi
   -[X] Opencode
+-[ ] personal agents
+  -[ ] grok bot
 -[ ] cli views
   -[ ] init config in right location
   -[ ] view status of config - available, installed etc by category and items
