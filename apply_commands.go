@@ -105,7 +105,7 @@ func applyItem(cmd *cobra.Command, environmentName string, category catalogCateg
 		if err := echoCommand(cmd, command); err != nil {
 			return err
 		}
-		process := exec.Command("sh", "-c", command)
+		process := exec.Command("bash", "-c", command)
 		process.Stdin = cmd.InOrStdin()
 		process.Stdout = cmd.OutOrStdout()
 		process.Stderr = cmd.ErrOrStderr()
@@ -123,7 +123,7 @@ func testsPass(tests []string) bool {
 	}
 	for _, test := range tests {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		err := exec.CommandContext(ctx, "/bin/sh", "-c", test).Run()
+		err := exec.CommandContext(ctx, "/bin/bash", "-c", test).Run()
 		cancel()
 		if err != nil {
 			return false
