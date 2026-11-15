@@ -5,8 +5,8 @@ import (
 	"io"
 	"sort"
 	"strings"
-	"unicode/utf8"
 
+	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +18,7 @@ func newCatalogCommand() *cobra.Command {
 	catalog.AddCommand(
 		newListCategoriesCommand(),
 		newBrowseCategoryCommand(),
-		newShowItemCommand(),
+		newShowCommand(),
 		newSearchCommand(),
 	)
 	return catalog
@@ -81,10 +81,10 @@ func newBrowseCategoryCommand() *cobra.Command {
 	}
 }
 
-func newShowItemCommand() *cobra.Command {
+func newShowCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "show-item <category> <item>",
-		Short: "Show item details and commands for each environment",
+		Short: "Show item details and supported environments",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			catalog, err := loadCatalog()
@@ -141,25 +141,43 @@ func newSearchCommand() *cobra.Command {
 type catalogMatch struct {
 	category catalogCategory
 	item     catalogItem
-	score    float64
+	distance int
 }
 
 func searchCatalog(catalog catalogFile, query string) []catalogMatch {
-	matches := make([]catalogMatch, 0)
+	items := make([]catalogMatch, 0)
+	searchTerms := make([]string, 0)
+	termItemIndexes := make([]int, 0)
 	for _, category := range catalog.Categories {
 		for _, item := range category.Items {
-			score := fuzzyScore(query, item.Name)
-			for _, alias := range item.Aliases {
-				if aliasScore := fuzzyScore(query, alias); aliasScore > score {
-					score = aliasScore
-				}
+			itemIndex := len(items)
+			items = append(items, catalogMatch{category: category, item: item})
+			for _, name := range append([]string{item.Name}, item.Aliases...) {
+				searchTerms = append(searchTerms, canonicalizeName(name))
+				termItemIndexes = append(termItemIndexes, itemIndex)
 			}
-			matches = append(matches, catalogMatch{category: category, item: item, score: score})
 		}
 	}
+
+	bestDistances := make(map[int]int)
+	for _, match := range fuzzy.RankFind(canonicalizeName(query), searchTerms) {
+		itemIndex := termItemIndexes[match.OriginalIndex]
+		if distance, ok := bestDistances[itemIndex]; !ok || match.Distance < distance {
+			bestDistances[itemIndex] = match.Distance
+		}
+	}
+
+	matches := make([]catalogMatch, 0, len(bestDistances))
+	for itemIndex, match := range items {
+		if distance, ok := bestDistances[itemIndex]; ok {
+			match.distance = distance
+			matches = append(matches, match)
+		}
+	}
+	// Stable sorting preserves catalog order when distance, item name, and category are tied.
 	sort.SliceStable(matches, func(i, j int) bool {
-		if matches[i].score != matches[j].score {
-			return matches[i].score > matches[j].score
+		if matches[i].distance != matches[j].distance {
+			return matches[i].distance < matches[j].distance
 		}
 		if matches[i].item.Name != matches[j].item.Name {
 			return matches[i].item.Name < matches[j].item.Name
@@ -167,49 +185,6 @@ func searchCatalog(catalog catalogFile, query string) []catalogMatch {
 		return matches[i].category.Name < matches[j].category.Name
 	})
 	return matches
-}
-
-func fuzzyScore(query, candidate string) float64 {
-	query = normalizedText(query)
-	candidate = normalizedText(candidate)
-	if query == "" || candidate == "" {
-		return 0
-	}
-	if query == candidate {
-		return 1
-	}
-
-	queryLength := utf8.RuneCountInString(query)
-	candidateLength := utf8.RuneCountInString(candidate)
-	longest := max(queryLength, candidateLength)
-	distance := levenshteinDistance(query, candidate)
-	return 1 - float64(distance)/float64(longest)
-}
-
-func levenshteinDistance(left, right string) int {
-	leftRunes := []rune(left)
-	rightRunes := []rune(right)
-	previous := make([]int, len(rightRunes)+1)
-	current := make([]int, len(rightRunes)+1)
-	for column := range previous {
-		previous[column] = column
-	}
-	for row, leftRune := range leftRunes {
-		current[0] = row + 1
-		for column, rightRune := range rightRunes {
-			cost := 0
-			if leftRune != rightRune {
-				cost = 1
-			}
-			current[column+1] = min(
-				current[column]+1,
-				previous[column+1]+1,
-				previous[column]+cost,
-			)
-		}
-		previous, current = current, previous
-	}
-	return previous[len(rightRunes)]
 }
 
 func printItemDetails(out io.Writer, category catalogCategory, item catalogItem) error {
@@ -221,47 +196,19 @@ func printItemDetails(out io.Writer, category catalogCategory, item catalogItem)
 			return err
 		}
 	}
-	if len(item.Aliases) > 0 {
-		if _, err := fmt.Fprintf(out, "Aliases: %s\n", strings.Join(item.Aliases, ", ")); err != nil {
-			return err
+	environments := make([]string, 0, len(supportedEnvironmentNames))
+	for _, environment := range supportedEnvironmentNames {
+		if _, ok := item.Environments[environment]; ok {
+			environments = append(environments, environment)
 		}
 	}
-	if _, err := fmt.Fprintln(out, "Environments:"); err != nil {
+	if len(environments) == 0 {
+		environments = append(environments, "none")
+	}
+	if _, err := fmt.Fprintf(out, "Supported environments: %s\n", strings.Join(environments, ", ")); err != nil {
 		return err
-	}
-	environments := make([]string, 0, len(item.Environments))
-	for environment := range item.Environments {
-		environments = append(environments, environment)
-	}
-	sort.Strings(environments)
-	for _, environment := range environments {
-		if _, err := fmt.Fprintf(out, "  %s:\n", environment); err != nil {
-			return err
-		}
-		commands := item.Environments[environment]
-		for _, commandGroup := range []struct {
-			name     string
-			commands []string
-		}{
-			{name: "install", commands: commands.Install},
-			{name: "upgrade", commands: commands.Upgrade},
-			{name: "config", commands: commands.Config},
-		} {
-			if _, err := fmt.Fprintf(out, "    %s:\n", commandGroup.name); err != nil {
-				return err
-			}
-			if len(commandGroup.commands) == 0 {
-				if _, err := fmt.Fprintln(out, "      (not specified)"); err != nil {
-					return err
-				}
-				continue
-			}
-			for _, command := range commandGroup.commands {
-				if _, err := fmt.Fprintf(out, "      - %s\n", command); err != nil {
-					return err
-				}
-			}
-		}
 	}
 	return nil
 }
+
+var supportedEnvironmentNames = []string{"arch", "debian"}

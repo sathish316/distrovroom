@@ -7,7 +7,7 @@ var catalogPath string
 func newRootCommand() *cobra.Command {
 	root := &cobra.Command{
 		Use:           "distro-vroom",
-		Short:         "Browse software install commands across Linux distributions",
+		Short:         "Go from 0-100 on a new Linux distro by installing your favourite apps, CLIs, tools, and setup commands easily",
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
