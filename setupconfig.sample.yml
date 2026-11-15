@@ -3,6 +3,8 @@ categories:
   - name: setup
     items:
       - github-ssh-keys
+      - pkg-config
+      - libsecret-dev
   - name: cli-programming
     items:
       - github-cli
@@ -12,20 +14,50 @@ categories:
       - haskell
       - idris
       - rust
+      - sdkman
+      - java
+      - maven
+      - gradle
+  - name: programming-frameworks
+    items:
+      - vite
+      - vite-plus
   - name: editors
     items:
       - zed
       - cursor
       - neovim
+      - intellij-idea-community
+  - name: browsers
+    items:
+      - google-chrome
+  - name: terminals
+    items:
+      - ghostty
+  - name: terminal-multiplexer
+    items:
+      - tmux
+      - herdr
+      - cmux
+  - name: terminal-utils
+    items:
+      - chafa
+      - wl-clipboard
+      - tree
   - name: agents
     items:
       - codex
       - claude-code
+      - claude-agent-acp
+      - codex-acp
+      - pi-acp
       - cursor-agent-cli
       - pi
       - opencode
       - grok-build
       - muse-spark
+      - fx
+      - herdr-app
   - name: personal-agents
     items:
       - grok-bot
@@ -36,3 +68,4 @@ categories:
     items:
       - obsidian
       - todoist
+      - tomat
