@@ -34,7 +34,7 @@ func TestDefaultConfigFileFlagUsesHomeConfigPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := filepath.Join(home, ".config", "distrovroom", "setupconfig.yml"); path != want {
+	if want := filepath.Join(home, ".config", "distrovroom", "config.yml"); path != want {
 		t.Fatalf("active config path = %q, want %q", path, want)
 	}
 }
@@ -55,6 +55,20 @@ func TestSampleConfigAndSelectedCatalogCommands(t *testing.T) {
 	if len(selected) != 9 {
 		t.Fatalf("got %d selected items, want 9", len(selected))
 	}
+	if len(config.Categories) != len(catalog.Categories) {
+		t.Fatalf("sample has %d categories, catalog has %d", len(config.Categories), len(catalog.Categories))
+	}
+	for categoryIndex, category := range catalog.Categories {
+		configured := config.Categories[categoryIndex]
+		if configured.Name != category.Name || len(configured.Items) != len(category.Items) {
+			t.Fatalf("sample category %d does not match catalog category %q", categoryIndex, category.Name)
+		}
+		for itemIndex, item := range category.Items {
+			if configured.Items[itemIndex] != item.Name {
+				t.Fatalf("sample item %d in %s = %q, want %q", itemIndex, category.Name, configured.Items[itemIndex], item.Name)
+			}
+		}
+	}
 	path := filepath.Join(t.TempDir(), "setupconfig.yml")
 	if out, err := runCLI(t, "--config-file", path, "config", "init-from-sample"); err != nil {
 		t.Fatalf("init: %v: %s", err, out)
@@ -65,6 +79,42 @@ func TestSampleConfigAndSelectedCatalogCommands(t *testing.T) {
 	}
 	if !strings.Contains(out, "curl -fsSL https://pi.dev/install.sh | sh") || strings.Contains(out, "@openai/codex") {
 		t.Fatalf("unexpected selected commands: %s", out)
+	}
+}
+
+func TestConfigureInitFromEmptyUsesActivePathAndPreservesExistingFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "nested", "config.yml")
+	if _, err := runCLI(t, "--config-file", path, "configure", "init-from-empty"); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(raw, emptyConfig) {
+		t.Fatal("created config differs from bundled minimal template")
+	}
+	config, err := decodeConfig(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	catalog, err := loadCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	selected, err := resolveConfig(config, catalog)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(selected) != 3 || selected[0].item.Name != "github-ssh-keys" || selected[1].item.Name != "github-cli" || selected[2].item.Name != "codex" {
+		t.Fatalf("unexpected minimal selections: %#v", selected)
+	}
+	if _, err := runCLI(t, "--config-file", path, "configure", "init-from-sample"); err == nil {
+		t.Fatal("expected existing config to be preserved")
+	}
+	again, err := os.ReadFile(path)
+	if err != nil || !bytes.Equal(again, raw) {
+		t.Fatalf("existing config changed: %v", err)
 	}
 }
 
