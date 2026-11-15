@@ -19,9 +19,9 @@ The build script downloads the Go modules, tidies the module files, and writes t
 Choose a starter file:
 
 ```sh
-./distro-vroom configure init-from-sample
+./distro-vroom config init-from-sample
 # Or start with SSH keys, GitHub CLI, and Codex:
-./distro-vroom configure init-from-empty
+./distro-vroom config init-from-empty
 ```
 
 The default path is `~/.config/distrovroom/config.yml`. The commands do not overwrite an existing file. Pass `--config-file path/to/config.yml` to create it elsewhere. The sample selects every catalog item; the minimal starter selects GitHub SSH keys, GitHub CLI, and Codex. Edit the environment and selections for your machine before running `apply`. Installing Codex requires npm.

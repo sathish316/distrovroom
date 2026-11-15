@@ -52,8 +52,8 @@ func TestSampleConfigAndSelectedCatalogCommands(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(selected) != 19 {
-		t.Fatalf("got %d selected items, want 19", len(selected))
+	if len(selected) != 20 {
+		t.Fatalf("got %d selected items, want 20", len(selected))
 	}
 	if len(config.Categories) != len(catalog.Categories) {
 		t.Fatalf("sample has %d categories, catalog has %d", len(config.Categories), len(catalog.Categories))
@@ -84,7 +84,7 @@ func TestSampleConfigAndSelectedCatalogCommands(t *testing.T) {
 
 func TestConfigureInitFromEmptyUsesActivePathAndPreservesExistingFile(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "nested", "config.yml")
-	if _, err := runCLI(t, "--config-file", path, "configure", "init-from-empty"); err != nil {
+	if _, err := runCLI(t, "--config-file", path, "config", "init-from-empty"); err != nil {
 		t.Fatal(err)
 	}
 	raw, err := os.ReadFile(path)
@@ -109,7 +109,7 @@ func TestConfigureInitFromEmptyUsesActivePathAndPreservesExistingFile(t *testing
 	if len(selected) != 3 || selected[0].item.Name != "github-ssh-keys" || selected[1].item.Name != "github-cli" || selected[2].item.Name != "codex" {
 		t.Fatalf("unexpected minimal selections: %#v", selected)
 	}
-	if _, err := runCLI(t, "--config-file", path, "configure", "init-from-sample"); err == nil {
+	if _, err := runCLI(t, "--config-file", path, "config", "init-from-sample"); err == nil {
 		t.Fatal("expected existing config to be preserved")
 	}
 	again, err := os.ReadFile(path)

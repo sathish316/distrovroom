@@ -2,12 +2,15 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
 
 func newConfigCommand() *cobra.Command {
-	config := &cobra.Command{Use: "configure", Aliases: []string{"config"}, Short: "Initialize and edit selected setup items"}
+	config := &cobra.Command{Use: "config", Short: "Initialize and edit selected setup items"}
 	config.AddCommand(
 		&cobra.Command{
 			Use: "init-from-empty", Short: "Copy the bundled minimal config to the active config path", Args: cobra.NoArgs,
@@ -35,6 +38,22 @@ func newConfigCommand() *cobra.Command {
 				}
 				_, err = fmt.Fprintf(cmd.OutOrStdout(), "Created %s\n", path)
 				return err
+			},
+		},
+		&cobra.Command{
+			Use: "show", Short: "Open the config file in $VISUAL or $EDITOR (default: vi)", Args: cobra.NoArgs,
+			RunE: func(cmd *cobra.Command, _ []string) error {
+				path, err := activeConfigPath()
+				if err != nil {
+					return err
+				}
+				if _, err := os.Stat(path); err != nil {
+					return fmt.Errorf("read setup config %q: %w (run `distro-vroom config init-from-sample` first)", path, err)
+				}
+				editor := strings.Fields(firstNonEmpty(os.Getenv("VISUAL"), os.Getenv("EDITOR"), "vi"))
+				editorCmd := exec.Command(editor[0], append(editor[1:], path)...)
+				editorCmd.Stdin, editorCmd.Stdout, editorCmd.Stderr = os.Stdin, cmd.OutOrStdout(), cmd.ErrOrStderr()
+				return editorCmd.Run()
 			},
 		},
 		&cobra.Command{
@@ -164,4 +183,13 @@ func loadSelection() (setupConfig, catalogFile, []selectedItem, error) {
 		return setupConfig{}, catalogFile{}, nil, err
 	}
 	return config, catalog, selected, nil
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return value
+		}
+	}
+	return ""
 }
