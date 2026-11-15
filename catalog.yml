@@ -1,0 +1,25 @@
+categories:
+  - name: cli-programming
+    items:
+      - name: GitHub CLI
+        aliases:
+          - gh
+          - github cli
+        description: Work with GitHub repositories, pull requests, issues, and workflows from the terminal.
+        environments:
+          debian:
+            install:
+              - sudo apt update
+              - sudo apt install gh
+            upgrade:
+              - sudo apt update
+              - sudo apt install --only-upgrade gh
+            config:
+              - gh auth login
+          arch:
+            install:
+              - sudo pacman -S --needed github-cli
+            upgrade:
+              - sudo pacman -Syu github-cli
+            config:
+              - gh auth login
