@@ -2,11 +2,13 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -22,6 +24,7 @@ func newApplyCommand() *cobra.Command {
 			return applyConfiguredItems(cmd, args)
 		},
 	}
+	command.Flags().Bool("force", false, "reinstall items even if their test commands show they are already installed")
 	command.Flags().String("email", "", "email for catalog commands that request it")
 	return command
 }
@@ -85,6 +88,10 @@ func applyItem(cmd *cobra.Command, environmentName string, category catalogCateg
 	if len(environment.Install) == 0 {
 		return fmt.Errorf("item %q in category %q has no install commands for %s", item.Name, category.Name, environmentName)
 	}
+	if force, _ := cmd.Flags().GetBool("force"); !force && testsPass(environment.Test) {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "%s/%s is already installed, skipping (use --force to reinstall)\n", category.Name, item.Name)
+		return err
+	}
 	parameters := commandParameters(cmd)
 	renderedCommands := make([]string, 0, len(environment.Install))
 	for _, command := range environment.Install {
@@ -107,6 +114,22 @@ func applyItem(cmd *cobra.Command, environmentName string, category catalogCateg
 		}
 	}
 	return nil
+}
+
+// testsPass reports whether every test command succeeds; no tests means unknown, so it returns false.
+func testsPass(tests []string) bool {
+	if len(tests) == 0 {
+		return false
+	}
+	for _, test := range tests {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		err := exec.CommandContext(ctx, "/bin/sh", "-c", test).Run()
+		cancel()
+		if err != nil {
+			return false
+		}
+	}
+	return true
 }
 
 func echoCommand(cmd *cobra.Command, command string) error {
