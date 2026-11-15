@@ -63,6 +63,37 @@ categories:
               - 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh" && nvm install 24 && node -v && npm -v'
             test:
               - 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh" && nvm use 24 >/dev/null && node -v && npm -v'
+      - name: haskell
+        description: Haskell development with Stack, GHCi, and Cabal.
+        environments:
+          debian:
+            install:
+              - sudo apt update
+              - sudo apt install ghc cabal-install haskell-stack
+            test: [command -v stack, command -v ghci, command -v cabal]
+          arch:
+            install: [sudo pacman -S --needed ghc cabal-install stack]
+            test: [command -v stack, command -v ghci, command -v cabal]
+      - name: idris
+        description: Idris 1 dependently typed programming language.
+        environments:
+          debian:
+            install:
+              - sudo apt update
+              - sudo apt install ghc cabal-install libgmp-dev
+              - cabal update
+              - 'cabal install idris --installdir="$HOME/.local/bin" --overwrite-policy=always'
+            test: ['test -x "$HOME/.local/bin/idris" || command -v idris']
+          arch:
+            install: [sudo pacman -S --needed idris]
+            test: [command -v idris]
+      - name: rust
+        description: Rust compiler and Cargo package manager via rustup.
+        environments:
+          default:
+            install: ["curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"]
+            upgrade: ['"$HOME/.cargo/bin/rustup" update']
+            test: ['. "$HOME/.cargo/env" && command -v rustc && command -v cargo']
   - name: editors
     items:
       - name: zed
@@ -192,3 +223,87 @@ categories:
                 trap 'rm -f "$file"' 0;
                 curl -fL "$url" -o "$file" && chmod +x "$file" && mv -f "$file" "$HOME/.local/bin/grok-bot"
             test: ['command -v grok-bot || test -x "$HOME/.local/bin/grok-bot"']
+  - name: music
+    items:
+      - name: spotify
+        description: Spotify desktop music player.
+        environments:
+          debian:
+            install:
+              - sudo apt update
+              - sudo apt install curl gnupg
+              - 'curl -fsSL https://download.spotify.com/debian/pubkey_5384CE82BA52C83A.asc | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg'
+              - 'echo "deb https://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list >/dev/null'
+              - sudo apt update
+              - sudo apt install spotify-client
+            upgrade: [sudo apt update, sudo apt install --only-upgrade spotify-client]
+            test: [command -v spotify]
+          arch:
+            install: [sudo pacman -S --needed spotify-launcher]
+            upgrade: [sudo pacman -Syu spotify-launcher]
+            test: [command -v spotify-launcher]
+  - name: productivity
+    items:
+      - name: obsidian
+        description: Obsidian notes app, CLI, and Codex agent skills.
+        environments:
+          debian:
+            install:
+              - sudo apt update
+              - sudo apt install curl jq git
+              - >-
+                arch="$(dpkg --print-architecture)";
+                url="$(curl -fsSL 'https://api.github.com/repos/obsidianmd/obsidian-releases/releases?per_page=100' |
+                  jq -er --arg suffix "_${arch}.deb" '[.[] | .assets[] | select(.name | endswith($suffix)) | .browser_download_url] | first')" || exit 1;
+                file="$(mktemp --suffix=.deb)" || exit 1;
+                trap 'rm -f "$file"' 0;
+                curl -fL "$url" -o "$file" && sudo apt install "$file"
+              - &obsidianSkills >-
+                repo="$HOME/.local/share/obsidian-skills";
+                if [ -d "$repo/.git" ]; then
+                  git -C "$repo" pull --ff-only;
+                else
+                  install -d "$(dirname "$repo")" && git clone --depth 1 https://github.com/kepano/obsidian-skills.git "$repo";
+                fi &&
+                install -d "$HOME/.codex/skills" &&
+                cp -R "$repo/skills/." "$HOME/.codex/skills/"
+            config:
+              - 'printf "In Obsidian, enable Settings > General > Command line interface and register the CLI.\n"'
+            test:
+              - command -v obsidian
+              - 'test -x "$HOME/.local/bin/obsidian"'
+              - 'test -f "$HOME/.codex/skills/obsidian-cli/SKILL.md"'
+          arch:
+            install:
+              - sudo pacman -S --needed obsidian git
+              - *obsidianSkills
+            config:
+              - 'printf "In Obsidian, enable Settings > General > Command line interface and register the CLI.\n"'
+            test:
+              - command -v obsidian
+              - 'test -x "$HOME/.local/bin/obsidian"'
+              - 'test -f "$HOME/.codex/skills/obsidian-cli/SKILL.md"'
+      - name: todoist
+        description: Todoist desktop app, CLI, and agent skills.
+        environments:
+          default:
+            install:
+              - >-
+                [ "$(uname -m)" = x86_64 ] || { echo 'Todoist AppImage requires x86_64' >&2; exit 1; };
+                install -d "$HOME/.local/bin";
+                file="$(mktemp "$HOME/.local/bin/.todoist.XXXXXX")" || exit 1;
+                trap 'rm -f "$file"' 0;
+                curl -fL https://todoist.com/linux_app/appimage -o "$file" &&
+                chmod +x "$file" && mv -f "$file" "$HOME/.local/bin/todoist"
+              - npm install -g @doist/todoist-cli
+              - td skill install codex
+              - td skill install claude-code
+              - td skill install cursor
+              - td skill install pi
+              - td skill install universal
+            upgrade: [npm install -g @doist/todoist-cli]
+            config: [td auth login]
+            test:
+              - 'test -x "$HOME/.local/bin/todoist"'
+              - command -v td
+              - 'test -f "$HOME/.codex/skills/todoist-cli/SKILL.md"'
