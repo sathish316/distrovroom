@@ -147,6 +147,10 @@ func saveConfig(config setupConfig) error {
 	if err != nil {
 		return fmt.Errorf("encode setup config: %w", err)
 	}
+	// Follow a symlinked config (for example into a dotfiles repo) so the link survives the save.
+	if resolved, err := filepath.EvalSymlinks(path); err == nil {
+		path = resolved
+	}
 	// Write beside the destination so rename replaces it atomically.
 	file, err := os.CreateTemp(filepath.Dir(path), ".setupconfig-*")
 	if err != nil {

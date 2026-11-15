@@ -246,3 +246,37 @@ func TestLegacyCategoryMapConfigStillLoads(t *testing.T) {
 		t.Fatalf("legacy config selected %d items, want 2", len(selected))
 	}
 }
+
+func TestConfigSaveKeepsSymlinkedConfigFile(t *testing.T) {
+	dir := t.TempDir()
+	target := filepath.Join(dir, "dotfiles", "config.yml")
+	link := filepath.Join(dir, "config", "config.yml")
+	if _, err := runCLI(t, "--config-file", target, "config", "init-from-sample"); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Dir(link), 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatal(err)
+	}
+	catalog, err := loadCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	category := catalog.Categories[0]
+	item := category.Items[0]
+	if _, err := runCLI(t, "--config-file", link, "config", "remove", category.Name, item.Name); err != nil {
+		t.Fatal(err)
+	}
+	if info, err := os.Lstat(link); err != nil || info.Mode()&os.ModeSymlink == 0 {
+		t.Fatalf("config path is no longer a symlink: %v", err)
+	}
+	raw, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(raw), "- "+item.Name+"\n") {
+		t.Fatalf("symlink target still lists %s after remove:\n%s", item.Name, raw)
+	}
+}
