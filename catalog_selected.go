@@ -1,11 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"net/mail"
-	"strings"
-	"text/template"
 
 	"github.com/spf13/cobra"
 )
@@ -55,7 +52,7 @@ func newCatalogCommandsCommand() *cobra.Command {
 						return err
 					}
 				}
-				if err := printCatalogCommands(cmd, selection, email); err != nil {
+				if err := printCatalogCommands(cmd, selection); err != nil {
 					return err
 				}
 				shown++
@@ -71,7 +68,7 @@ func newCatalogCommandsCommand() *cobra.Command {
 	return command
 }
 
-func printCatalogCommands(cmd *cobra.Command, selection selectedItem, email string) error {
+func printCatalogCommands(cmd *cobra.Command, selection selectedItem) error {
 	out := cmd.OutOrStdout()
 	if _, err := fmt.Fprintf(out, "%s/%s\n", selection.category.Name, selection.item.Name); err != nil {
 		return err
@@ -87,7 +84,7 @@ func printCatalogCommands(cmd *cobra.Command, selection selectedItem, email stri
 			{"install", commands.Install}, {"upgrade", commands.Upgrade}, {"config", commands.Config}, {"test", commands.Test},
 		} {
 			for _, line := range group.lines {
-				rendered, err := renderCatalogCommand(line, email)
+				rendered, err := renderCatalogCommand(line, commandParameters(cmd))
 				if err != nil {
 					return fmt.Errorf("render %s/%s %s command: %w", selection.category.Name, selection.item.Name, group.name, err)
 				}
@@ -98,26 +95,4 @@ func printCatalogCommands(cmd *cobra.Command, selection selectedItem, email stri
 		}
 	}
 	return nil
-}
-
-func renderCatalogCommand(command, email string) (string, error) {
-	if !strings.Contains(command, "{{") {
-		return command, nil
-	}
-	if email == "" {
-		email = "EMAIL_ADDRESS"
-	}
-	tmpl, err := template.New("catalog command").Funcs(template.FuncMap{
-		"shellQuote": func(value string) string {
-			return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
-		},
-	}).Option("missingkey=error").Parse(command)
-	if err != nil {
-		return "", err
-	}
-	var rendered bytes.Buffer
-	if err := tmpl.Execute(&rendered, struct{ Email string }{Email: email}); err != nil {
-		return "", err
-	}
-	return rendered.String(), nil
 }

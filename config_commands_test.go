@@ -77,8 +77,8 @@ func TestCatalogCommandEmailTemplate(t *testing.T) {
 		t.Fatalf("email was not rendered: %s", out)
 	}
 	out, err = runCLI(t, "--config-file", path, "catalog", "commands", "setup", "ssh-keys")
-	if err != nil || !strings.Contains(out, "'EMAIL_ADDRESS'") {
-		t.Fatalf("missing email placeholder: %v: %s", err, out)
+	if err == nil {
+		t.Fatalf("missing email should be rejected: %v: %s", err, out)
 	}
 	if _, err := runCLI(t, "--config-file", path, "catalog", "commands", "setup", "ssh-keys", "--email", "invalid"); err == nil {
 		t.Fatal("expected invalid email to be rejected")
@@ -180,5 +180,29 @@ func TestStatusUsesCatalogTestCommands(t *testing.T) {
 	item.Environments["default"] = environmentCommands{}
 	if got := checkInstalled(item); got != unknown {
 		t.Fatalf("no test = %s, want unknown", got)
+	}
+}
+
+func TestApplyUsesSelectedItemsAndDefaultEnvironment(t *testing.T) {
+	dir := t.TempDir()
+	configFile := filepath.Join(dir, "setupconfig.yml")
+	catalogFile := filepath.Join(dir, "catalog.yml")
+	outputFile := filepath.Join(dir, "installed.txt")
+	if err := os.WriteFile(configFile, []byte("environment: arch\ncategories:\n  - name: agents\n    items: [demo]\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	catalog := "categories:\n  - name: agents\n    items:\n      - name: demo\n        environments:\n          default:\n            install:\n              - printf %s {{.email}} > " + shellQuote(outputFile) + "\n"
+	if err := os.WriteFile(catalogFile, []byte(catalog), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := runCLI(t, "--catalog", catalogFile, "--config-file", configFile, "apply", "agents", "demo", "--email", "you@example.com"); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(outputFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(raw) != "you@example.com" {
+		t.Fatalf("applied output = %q", raw)
 	}
 }
