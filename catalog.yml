@@ -130,6 +130,46 @@ categories:
                 trap 'rm -f "$file"' 0;
                 curl -fL "$url" -o "$file" && chmod +x "$file" && mv -f "$file" "$HOME/.local/bin/cursor"
             test: ['command -v cursor || test -x "$HOME/.local/bin/cursor"']
+      - name: neovim
+        description: Neovim modal text editor.
+        environments:
+          debian:
+            install:
+              - sudo apt update
+              - sudo apt install neovim
+            upgrade:
+              - sudo apt update
+              - sudo apt install --only-upgrade neovim
+            test: [command -v nvim]
+          arch:
+            install: [sudo pacman -S --needed neovim]
+            upgrade: [sudo pacman -Syu neovim]
+            test: [command -v nvim]
+          macos:
+            install: [brew install neovim]
+            upgrade: [brew upgrade neovim]
+            test: [command -v nvim]
+  - name: terminals
+    items:
+      - name: ghostty
+        description: Ghostty GPU-accelerated terminal emulator.
+        environments:
+          debian:
+            install:
+              - sudo apt update
+              - sudo apt install curl
+              - '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/mkasberg/ghostty-ubuntu/HEAD/install.sh)"'
+            upgrade:
+              - '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/mkasberg/ghostty-ubuntu/HEAD/install.sh)"'
+            test: [command -v ghostty]
+          arch:
+            install: [sudo pacman -S --needed ghostty]
+            upgrade: [sudo pacman -Syu ghostty]
+            test: [command -v ghostty]
+          macos:
+            install: [brew install --cask ghostty]
+            upgrade: [brew upgrade --cask ghostty]
+            test: ['test -d /Applications/Ghostty.app || test -d "$HOME/Applications/Ghostty.app"']
   - name: terminal-multiplexer
     items:
       - name: tmux
@@ -163,6 +203,23 @@ categories:
               - brew install --cask cmux
             upgrade: [brew upgrade --cask cmux]
             test: ['test -d /Applications/cmux.app || test -d "$HOME/Applications/cmux.app"']
+  - name: terminal-utils
+    items:
+      - name: chafa
+        description: Terminal image viewer that renders images and animations as text graphics.
+        environments:
+          debian:
+            install:
+              - sudo apt update
+              - sudo apt install chafa
+            upgrade:
+              - sudo apt update
+              - sudo apt install --only-upgrade chafa
+            test: [command -v chafa]
+          arch:
+            install: [sudo pacman -S --needed chafa]
+            upgrade: [sudo pacman -Syu chafa]
+            test: [command -v chafa]
   - name: agents
     items:
       - name: codex
@@ -302,8 +359,7 @@ categories:
             config:
               - 'printf "In Obsidian, enable Settings > General > Command line interface and register the CLI.\n"'
             test:
-              - command -v obsidian
-              - 'test -x "$HOME/.local/bin/obsidian"'
+              - 'command -v obsidian || test -x "$HOME/.local/bin/obsidian"'
               - 'test -f "$HOME/.codex/skills/obsidian-cli/SKILL.md"'
           arch:
             install:
@@ -312,8 +368,7 @@ categories:
             config:
               - 'printf "In Obsidian, enable Settings > General > Command line interface and register the CLI.\n"'
             test:
-              - command -v obsidian
-              - 'test -x "$HOME/.local/bin/obsidian"'
+              - 'command -v obsidian || test -x "$HOME/.local/bin/obsidian"'
               - 'test -f "$HOME/.codex/skills/obsidian-cli/SKILL.md"'
       - name: todoist
         description: Todoist desktop app, CLI, and agent skills.
